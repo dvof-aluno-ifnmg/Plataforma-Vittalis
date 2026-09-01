@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Painel de Saúde</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Bibliotecas para Geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- REFERÊNCIA AO ARQUIVO DE SCRIPTS EXTERNOS -->
+    <script src="vittalis_scripts.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-secondary": "#ffffff",
+                "on-error": "#ffffff",
+                "background": "#f8f9fa",
+                "tertiary-fixed-dim": "#fcb97c",
+                "surface": "#f8f9fa",
+                "inverse-surface": "#2e3132",
+                "surface-dim": "#d9dadb",
+                "surface-container-low": "#f3f4f5",
+                "on-tertiary-fixed": "#2d1600",
+                "surface-variant": "#e1e3e4",
+                "on-primary-container": "#8ed1ea",
+                "on-surface": "#191c1d",
+                "on-tertiary-container": "#fdba7d",
+                "on-secondary-fixed": "#091e29",
+                "surface-tint": "#19667d",
+                "outline-variant": "#bfc8cc",
+                "on-secondary-fixed-variant": "#364956",
+                "surface-container": "#edeeef",
+                "surface-container-lowest": "#ffffff",
+                "primary": "#004253",
+                "on-tertiary-fixed-variant": "#693c08",
+                "on-primary-fixed": "#001f28",
+                "outline": "#70787d",
+                "surface-bright": "#f8f9fa",
+                "inverse-primary": "#8dd0e9",
+                "primary-container": "#005b71",
+                "on-secondary-container": "#546775",
+                "surface-container-high": "#e7e8e9",
+                "on-surface-variant": "#40484c",
+                "surface-container-highest": "#e1e3e4",
+                "primary-fixed": "#b7eaff",
+                "on-error-container": "#93000a",
+                "on-primary": "#ffffff",
+                "secondary-container": "#d1e5f6",
+                "on-tertiary": "#ffffff",
+                "on-background": "#191c1d",
+                "secondary": "#4e616f",
+                "tertiary-container": "#784815",
+                "secondary-fixed": "#d1e5f6",
+                "primary-fixed-dim": "#8dd0e9",
+                "error": "#ba1a1a",
+                "on-primary-fixed-variant": "#004e61",
+                "tertiary-fixed": "#ffdcc0",
+                "inverse-on-surface": "#f0f1f2",
+                "secondary-fixed-dim": "#b5c9d9",
+                "error-container": "#ffdad6",
+                "tertiary": "#5c3200"
+              },
+              fontFamily: {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.375rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+        }
+        .card-radius { border-radius: 0.375rem; }
+
+        /* Modal Styles */
+        #modal-admin-senha {
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+    
+    <!-- MODAL DE SENHA ADMINISTRATIVA -->
+    <div id="modal-admin-senha" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-primary p-6 text-white text-center">
+                <span class="material-symbols-outlined text-4xl mb-2">admin_panel_settings</span>
+                <h3 class="text-xl font-bold">Acesso Restrito</h3>
+                <p class="text-xs opacity-80">Insira a credencial administrativa para continuar.</p>
+            </div>
+            <div class="p-6">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Senha de Acesso</label>
+                <input type="password" id="input-senha-admin-modal" class="w-full bg-slate-100 border-none rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary/20 transition-all mb-4" placeholder="••••••••">
+                <div class="flex gap-3">
+                    <button onclick="fecharModalAdmin()" class="flex-1 py-3 px-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all text-sm">Cancelar</button>
+                    <button onclick="validarSenhaAdmin()" class="flex-1 py-3 px-4 rounded-xl font-bold bg-primary text-white hover:bg-primary-container transition-all text-sm shadow-lg shadow-primary/20">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR ATUALIZADA -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass-nav shadow-sm py-4 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="text-2xl font-black tracking-tighter text-primary">Vittalis</div>
+            
+            <div class="hidden md:flex gap-8 items-center">
+                <a href="home.html" class="text-on-surface-variant hover:text-primary font-bold text-xs uppercase tracking-widest transition-all">Home</a>
+                <a href="dashboard.html" class="text-primary border-b-2 border-primary pb-1 font-bold text-xs uppercase tracking-widest transition-all">Dashboard</a>
+                
+                <!-- LINK DA NAVBAR COM SUPORTE A TIMER -->
+
+                <a href="glossario.html" class="text-on-surface-variant hover:text-primary font-bold text-xs uppercase tracking-widest transition-all">Glossário</a>
+                <a href="config.html" class="text-on-surface-variant hover:text-primary font-bold text-xs uppercase tracking-widest transition-all">Configurações</a>
+            </div>
+
+            <div class="flex gap-6 items-center">
+                <!-- Sino de Notificação -->
+                <button class="text-on-surface-variant hover:text-primary transition-all flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">notifications</span>
+                </button>
+
+                <!-- Perfil Dinâmico: Silhueta estilo WhatsApp ou Foto do Usuário -->
+                <div onclick="window.location.href='config.html'" class="w-11 h-11 rounded-2xl bg-slate-200 border border-outline-variant/30 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-105 transition-all shadow-sm relative">
+                    <span id="nav-profile-placeholder" class="material-symbols-outlined text-slate-500 text-3xl">person</span>
+                    <img id="nav-profile-img" alt="User Profile" class="hidden w-full h-full object-cover absolute inset-0" src=""/>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="min-h-screen pt-24 pb-12">
+        <div class="p-8 max-w-[1600px] w-full mx-auto space-y-10">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h2 class="text-3xl font-extrabold tracking-tight text-primary">Painel de Saúde</h2>
+                    <p class="text-on-surface-variant mt-1 font-medium">Análise consolidada do bem-estar estudantil</p>
+                </div>
+                <!-- BLOCO DO BOTÃO DESKTOP COM TIMER E ADMIN -->
+                <div class="flex flex-col items-end gap-2">
+                    <span id="timer-desktop" class="text-[10px] font-bold text-error uppercase tracking-widest bg-error/5 px-2 py-0.5 rounded hidden"></span>
+                    <div class="flex gap-3">
+                        <button onclick="gerarRelatorio()" class="bg-white border-2 border-primary text-primary hover:bg-primary/5 px-6 py-3 rounded-xl flex items-center gap-2 font-bold transition-all shadow-sm cursor-pointer">
+                            <span class="material-symbols-outlined">picture_as_pdf</span>
+                            Boletim Médico
+                        </button>
+                       
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div id="empty-state" class="hidden flex-col items-center justify-center py-20 bg-surface-container-lowest border-2 border-dashed border-outline-variant/40 rounded-xl text-center">
+                <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 text-primary">
+                    <span class="material-symbols-outlined text-4xl" data-icon="monitoring">monitoring</span>
+                </div>
+                <h3 class="text-2xl font-bold text-primary mb-2">Nenhum dado encontrado</h3>
+                <p class="text-on-surface-variant max-w-md mx-auto mb-8">Parece que você ainda não registrou nenhuma avaliação de saúde. Realize a primeira medição com um profissional para gerar os gráficos e estatísticas.</p>
+                <!-- BLOCO DO BOTÃO EMPTY STATE COM TIMER -->
+                <div class="flex flex-col items-center gap-2">
+                    <span id="timer-empty" class="text-[10px] font-bold text-error uppercase tracking-widest hidden"></span>
+                </div>
+            </div>
+
+            <div id="analytics-grid" class="grid grid-cols-1 md:grid-cols-12 gap-8 hidden">
+                
+                <div class="md:col-span-8 bg-surface-container-lowest p-8 card-radius shadow-sm border border-outline-variant/10">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-lg font-bold text-primary">Análise de Pressão Arterial (mmHg)</h3>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 bg-surface-container-low text-xs font-bold rounded-full text-on-surface-variant uppercase tracking-widest">Histórico</span>
+                        </div>
+                    </div>
+                    <div class="h-64 w-full relative">
+                        <canvas id="chartPressao"></canvas>
+                    </div>
+                </div>
+
+                <div class="md:col-span-4 bg-surface-container-lowest p-8 card-radius shadow-sm border border-outline-variant/10 flex flex-col items-center text-center">
+                    <h3 class="text-lg font-bold text-primary mb-8 w-full text-left">Distribuição do IMC (Atual)</h3>
+                    <div class="relative w-48 h-48 mb-8">
+                        <canvas id="chartIMC"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+                            <span id="imc-display-value" class="text-4xl font-black text-primary">--</span>
+                            <span id="imc-display-status" class="text-[10px] font-bold text-slate-400 uppercase">Aguardando</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 w-full mt-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-primary"></div>
+                            <span class="text-xs font-bold text-slate-600">Alvo (18.5 - 24.9)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-surface-variant"></div>
+                            <span class="text-xs font-bold text-slate-600">Fora do Alvo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-5 bg-surface-container-lowest p-8 card-radius shadow-sm border border-outline-variant/10">
+                    <h3 class="text-lg font-bold text-primary mb-8">Diagnóstico de Saúde</h3>
+                    <div class="overflow-hidden border border-outline-variant/20 rounded-lg">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-slate-600 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="px-4 py-3">Descrição</th>
+                                    <th class="px-4 py-3 text-center">Atual</th>
+                                    <th class="px-4 py-3 text-center">Normal</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/10">
+                            <!-- IMC (Mantém) -->
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-4">
+                                    <div class="font-bold text-primary">IMC <span class="text-[10px] font-normal text-slate-500 italic">kg/m²</span></div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-medium">Índice Massa Corporal</div>
+                                </td>
+                                <td id="table-imc-atual" class="px-4 py-4 text-center font-bold text-primary">--</td>
+                                <td class="px-4 py-4 text-center text-slate-500 font-medium text-xs">18,60 - 24,90</td>
+                            </tr>
+                            <!-- Glicemia (Substituiu o PGC) -->
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-4">
+                                    <div class="font-bold text-primary">Glicemia <span class="text-[10px] font-normal text-slate-500 italic">mg/dL</span></div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-medium">Glicemia Capilar</div>
+                                </td>
+                                <td id="table-glicemia-atual" class="px-4 py-4 text-center font-bold text-primary">--</td>
+                                <td class="px-4 py-4 text-center text-slate-500 font-medium text-xs">70 - 99 mg/dL</td>
+                            </tr>
+                            <!-- RCQ (Novo Campo) -->
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-4">
+                                    <div class="font-bold text-primary">RCQ <span class="text-[10px] font-normal text-slate-500 italic">índice</span></div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-medium">Relação Cintura-Quadril</div>
+                                </td>
+                                <td id="table-rcq-atual" class="px-4 py-4 text-center font-bold text-primary">--</td>
+                                <td class="px-4 py-4 text-center text-slate-500 font-medium text-xs">< 0.90(M) / 0.85(F)</td>
+                            </tr>
+                            <!-- Batimentos (Mantém) -->
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-4">
+                                    <div class="font-bold text-primary">Batimentos <span class="text-[10px] font-normal text-slate-500 italic">bpm</span></div>
+                                    <div class="text-[10px] text-slate-500 uppercase font-medium">Frequência Cardíaca</div>
+                                </td>
+                                <td id="table-bpm-atual" class="px-4 py-4 text-center font-bold text-primary">--</td>
+                                <td class="px-4 py-4 text-center text-slate-500 font-medium text-xs">60 - 100 bpm</td>
+                            </tr>
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="md:col-span-7 bg-surface-container-lowest p-8 card-radius shadow-sm border border-outline-variant/10">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-lg font-bold text-primary">Evolução de Medidas Corporais</h3>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#004253]"></div>
+                                <span class="text-xs font-bold text-slate-500">Peso (kg)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-[#fcb97c]"></div>
+                                <span class="text-xs font-bold text-slate-500">Cintura (cm)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-64 w-full relative">
+                        <canvas id="chartComposicao"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-50 border-t border-slate-200 flex justify-around p-3 z-50">
+        <a class="flex flex-col items-center gap-1 text-cyan-700" href="dashboard.html">
+            <span class="material-symbols-outlined" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Início</span>
+        </a>
+        <a onclick="abrirModalAdmin()" class="flex flex-col items-center gap-1 text-slate-500 cursor-pointer">
+            <span class="material-symbols-outlined">admin_panel_settings</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Admin</span>
+        </a>
+        <!-- BLOCO DO BOTÃO MOBILE COM TIMER -->
+        <a id="btn-mobile-av" onclick="window.location.href='formulario.html'" class="flex flex-col items-center gap-1 text-slate-500 cursor-pointer">
+            <div class="flex flex-col items-center">
+                <span id="timer-mobile" class="text-[7px] font-black text-error mb-0.5 hidden"></span>
+                <span id="icon-mobile-av" class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Novo</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-500" onclick="gerarRelatorio()" href="#">
+            <span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Relatórios</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-500" href="config.html">
+            <span class="material-symbols-outlined" data-icon="settings">settings</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter">Config</span>
+        </a>
+    </nav>
+
+    <style>
+        .maya-scroll {
+            overflow-y: auto !important;
+            overscroll-behavior: contain;
+            scrollbar-width: thin; 
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .maya-scroll::-webkit-scrollbar { width: 5px; }
+        .maya-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    
+        @keyframes ai-very-soft-glow {
+            0% { box-shadow: 0 0 0 0 rgba(0, 66, 83, 0.1); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 66, 83, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 66, 83, 0); }
+        }
+        .maya-pulse-minimal { animation: ai-very-soft-glow 6s infinite; }
+    
+        #maya-toggle-btn {
+            border-radius: 9999px !important;
+            padding: 0;
+            overflow: hidden;
+            background: transparent; 
+            border: none;             
+            cursor: pointer;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #maya-toggle-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+        }
+    </style>
+    
+    <div id="maya-chat-widget" class="fixed bottom-6 right-6 z-50 font-inter">
+        <button id="maya-toggle-btn" class="shadow-2xl hover:scale-105 active:scale-95 transition-all maya-pulse-minimal">
+            <img src="img/chat.png" alt="Maya Chat">
+        </button>
+    
+        <div id="maya-chat-box" class="hidden flex absolute bottom-20 right-0 w-[370px] h-[550px] max-h-[85vh] bg-white rounded-2xl shadow-2xl flex-col border border-slate-200 overflow-hidden transform origin-bottom-right transition-all">
+            <div class="bg-[#004253] text-white p-4 flex justify-between items-center shadow-md z-10 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-slate-100 flex items-center justify-center">
+                        <img src="img/maya.png" alt="Maya" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex flex-col">
+                        <h3 class="font-bold text-base leading-tight">Maya</h3>
+                        <p class="text-[10px] opacity-90 font-medium tracking-tight">Assistente Virtual do Portal Vittalis</p>
+                    </div>
+                </div>
+                <button id="maya-close-btn" class="hover:bg-white/10 p-1 rounded-full transition-colors">
+                    <span class="material-symbols-outlined text-xl text-white">close</span>
+                </button>
+            </div>
+            <div id="maya-chat-messages" class="flex-1 min-h-0 p-5 space-y-4 bg-slate-50/50 maya-scroll overflow-y-auto"></div>
+            <div class="p-4 bg-white border-t border-slate-100 flex-shrink-0">
+                <form id="maya-chat-form" class="flex items-center gap-2 relative">
+                    <input type="text" id="maya-user-input" autocomplete="off" placeholder="Escreva sua dúvida..." class="w-full h-12 pl-4 pr-12 bg-slate-100 border-none focus:ring-2 focus:ring-[#004253]/20 rounded-xl transition-all text-sm text-slate-700">
+                    <button type="submit" class="absolute right-1.5 w-9 h-9 bg-[#004253] text-white rounded-lg flex items-center justify-center hover:bg-[#005b71] transition-all">
+                        <span class="material-symbols-outlined text-xl text-white">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE INTEGRATION & DASHBOARD LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+            authDomain: "site-tcc-abaa1.firebaseapp.com",
+            projectId: "site-tcc-abaa1",
+            storageBucket: "site-tcc-abaa1.firebasestorage.app",
+            messagingSenderId: "819270190928",
+            appId: "1:819270190928:web:523152052cdfb4247e4e55",
+            measurementId: "G-YLJ4TP0BFC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        let currentUser = null;
+
+        window.abrirModalAdmin = () => {
+            document.getElementById('modal-admin-senha').classList.remove('hidden');
+            document.getElementById('modal-admin-senha').classList.add('flex');
+            document.getElementById('input-senha-admin-modal').focus();
+        };
+
+        window.fecharModalAdmin = () => {
+            document.getElementById('modal-admin-senha').classList.add('hidden');
+            document.getElementById('modal-admin-senha').classList.remove('flex');
+            document.getElementById('input-senha-admin-modal').value = '';
+        };
+
+       window.validarSenhaAdmin = () => {
+            const senha = document.getElementById('input-senha-admin-modal').value.trim();
+            if (btoa(senha) === 'dml0dGFsaXNfYWRtaW4=') {
+                window.location.href = 'admin.html';
+            } else {
+                alert('Senha administrativa incorreta.');
+            }
+        };
+
+        window.conferirSenhaPlanilha = (valor) => {
+            const botao = document.getElementById('admin-export');
+            const senhaDigitada = valor.trim();
+            if (btoa(senhaDigitada) === 'dml0dGFsaXNfYWRtaW4=') {
+                botao.disabled = false; 
+            } else {
+                botao.disabled = true;  
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().photoURL) {
+                    const navImg = document.getElementById('nav-profile-img');
+                    const navPlaceholder = document.getElementById('nav-profile-placeholder');
+                    navImg.src = userDoc.data().photoURL;
+                    navImg.classList.remove('hidden');
+                    navPlaceholder.classList.add('hidden');
+                }
+                loadDashboardData(user.uid);
+                loadHistory(user.uid); 
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadDashboardData(uid) {
+            const gridGraficos = document.getElementById('analytics-grid');
+            const estadoVazio = document.getElementById('empty-state');
+            try {
+                // CORREÇÃO: Buscamos apenas pelo ID e ordenamos via JS para evitar erros de índice composto
+                const q = query(collection(db, "assessments"), where("userId", "==", uid));
+                const querySnapshot = await getDocs(q);
+                let historico = [];
+                querySnapshot.forEach((doc) => { historico.push(doc.data()); });
+                
+                // ORDENAÇÃO MANUAL POR TEMPO (ASCENDENTE)
+                historico.sort((a, b) => {
+                    const dataA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp || 0);
+                    const dataB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp || 0);
+                    return dataA - dataB;
+                });
+
+                if (historico.length === 0) {
+                    historico = JSON.parse(localStorage.getItem('vittalis_historico_' + uid)) || [];
+                }
+
+                if (historico.length === 0) {
+                    gridGraficos.classList.add('hidden');
+                    estadoVazio.classList.remove('hidden');
+                    estadoVazio.classList.add('flex');
+                    return;
+                }
+
+                gridGraficos.classList.remove('hidden');
+                gridGraficos.classList.add('grid');
+                estadoVazio.classList.add('hidden');
+                renderCharts(historico);
+                checkAssessmentCooldown(historico);
+            } catch (error) { console.error("Erro Dashboard:", error); }
+        }
+
+        function checkAssessmentCooldown(historico) {
+            if (!historico || historico.length === 0) return;
+            const ultimaAv = historico[historico.length - 1];
+            let dataUltima = ultimaAv.timestamp?.toDate ? ultimaAv.timestamp.toDate() : new Date(ultimaAv.timestamp || Date.now());
+            const intervaloTrava = 15 * 24 * 60 * 60 * 1000;
+            const agora = new Date();
+            const dataDesbloqueio = new Date(dataUltima.getTime() + intervaloTrava);
+
+            if (agora < dataDesbloqueio) {
+                const atualizarTimer = () => {
+                    const tempoRestante = dataDesbloqueio - new Date();
+                    if (tempoRestante <= 0) { location.reload(); return; }
+                    const dias = Math.floor(tempoRestante / (24 * 60 * 60 * 1000));
+                    const horas = Math.floor((tempoRestante % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                    const textoTimer = `${dias}d ${horas}h`;
+                    ['timer-desktop', 'timer-empty', 'timer-mobile', 'timer-nav'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.innerText = id === 'timer-nav' ? textoTimer : `Próxima em ${textoTimer}`;
+                            el.classList.remove('hidden');
+                        }
+                    });
+                };
+                atualizarTimer();
+                setInterval(atualizarTimer, 3600000); 
+
+                const idsLinks = ['btn-desktop-av', 'btn-empty-av', 'btn-mobile-av', 'nav-av-link'];
+                idsLinks.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.onclick = (e) => {
+                            e.preventDefault();
+                            alert(`Acesso bloqueado. Próxima avaliação pessoal permitida em ${dataDesbloqueio.toLocaleDateString()}. Use o acesso administrativo se necessário.`);
+                        };
+                        el.style.opacity = "0.5";
+                        el.style.cursor = "not-allowed";
+                    }
+                });
+                ['icon-desktop-av', 'icon-empty-av', 'icon-mobile-av'].forEach(id => {
+                    const icon = document.getElementById(id);
+                    if (icon) icon.innerText = 'lock';
+                });
+            }
+        }
+
+        function renderCharts(historico) {
+            Chart.defaults.font.family = 'Inter';
+            const labelsHistorico = historico.map((_, i) => `Av. ${i + 1}`);
+            const sistolicas = historico.map(av => av.medicoes?.pressaoSistolica || 0);
+            const diastolicas = historico.map(av => av.medicoes?.pressaoDiastolica || 0);
+            
+            new Chart(document.getElementById('chartPressao').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labelsHistorico,
+                    datasets: [
+                        { label: 'Sistólica', data: sistolicas, borderColor: '#004253', borderWidth: 2, tension: 0.3 },
+                        { label: 'Diastólica', data: diastolicas, borderColor: '#8dd0e9', borderWidth: 2, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const dadosAtuais = historico[historico.length - 1];
+            const imcVal = dadosAtuais.medicoes?.imc || 0;
+            let imcStatus = "Normal"; let imcColor = "#004253";
+            if(imcVal < 18.5) { imcStatus = "Abaixo do Peso"; imcColor = "#fcb97c"; }
+            else if(imcVal > 24.9 && imcVal < 30) { imcStatus = "Sobrepeso"; imcColor = "#fcb97c"; }
+            else if(imcVal >= 30) { imcStatus = "Obesidade"; imcColor = "#ba1a1a"; }
+
+            document.getElementById('imc-display-value').innerText = imcVal > 0 ? imcVal : '--';
+            document.getElementById('imc-display-status').innerText = imcStatus;
+
+            new Chart(document.getElementById('chartIMC').getContext('2d'), {
+                type: 'doughnut',
+                data: { datasets: [{ data: [imcVal, (40 - imcVal > 0) ? (40 - imcVal) : 0], backgroundColor: [imcColor, '#e1e3e4'], cutout: '90%', borderRadius: [10, 0] }] },
+                options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180 }
+            });
+
+            document.getElementById('table-imc-atual').innerText = imcVal > 0 ? imcVal.toString().replace('.', ',') : '--';
+            document.getElementById('table-glicemia-atual').innerText = dadosAtuais.medicoes?.glicemia || '--';
+            document.getElementById('table-rcq-atual').innerText = dadosAtuais.medicoes?.rcq || '--';
+            document.getElementById('table-bpm-atual').innerText = dadosAtuais.medicoes?.freqCardiaca || '--';
+
+            new Chart(document.getElementById('chartComposicao').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labelsHistorico,
+                    datasets: [
+                        { label: 'Peso', data: historico.map(av => av.medicoes?.peso || 0), borderColor: '#004253', borderWidth: 2, tension: 0.3 },
+                        { label: 'Cintura', data: historico.map(av => av.medicoes?.circAbdominal || 0), borderColor: '#fcb97c', borderWidth: 2, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+       window.gerarRelatorio = async () => {
+            if (!currentUser) { alert("Usuário não identificado."); return; }
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF(); 
+                const userRef = doc(db, "users", currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                const nomeUsuario = userSnap.exists() ? userSnap.data().nome : "Usuário Vittalis";
+                const q = query(collection(db, "assessments"), where("userId", "==", currentUser.uid), orderBy("timestamp", "desc"), limit(1));
+                const snap = await getDocs(q);
+                if (snap.empty) { alert("Nenhuma avaliação encontrada."); return; }
+                const data = snap.docs[0].data();
+                const m = data.medicoes || {};
+                const dataAv = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+                const dataHoje = new Date().toLocaleDateString('pt-BR');
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(20);
+                pdf.setTextColor(0, 66, 83); 
+                pdf.text("VITTALIS | RELATÓRIO DE SAÚDE", 105, 25, { align: "center" });
+                pdf.setDrawColor(0, 66, 83);
+                pdf.setLineWidth(1);
+                pdf.line(20, 32, 190, 32);
+                pdf.setFillColor(245, 247, 248); 
+                pdf.rect(20, 42, 170, 25, 'F');
+                pdf.setDrawColor(0, 66, 83);
+                pdf.setLineWidth(1.5);
+                pdf.line(20, 42, 20, 67); 
+                pdf.setFontSize(10);
+                pdf.setTextColor(50, 50, 50);
+                pdf.setFont("helvetica", "normal");
+                const introParte1 = `Olá profissional de saúde, segue abaixo a última avaliação física do usuário `;
+                const introNome =`${nomeUsuario}`;
+                const introParte2 = ` no dia ${dataAv} realizada pela plataforma Vittalis. Documento emitido em: ${dataHoje}.`;
+                pdf.text(introParte1, 25, 52);
+                pdf.setFont("helvetica", "bold");
+                pdf.text(introNome, 25 + pdf.getTextWidth(introParte1), 52);
+                pdf.setFont("helvetica", "normal");
+                pdf.text(introParte2, 25, 58);
+                pdf.autoTable({
+                    startY: 75,
+                    margin: { left: 20, right: 20 },
+                    head: [['INDICADOR', 'RESULTADO']],
+                    body: [
+                        ['Peso Corporal', `${m.peso || '--'} kg`],
+                        ['Estatura (Altura)', `${m.altura || '--'} m`],
+                        ['Índice de Massa Corporal (IMC)', `${m.imc || '--'}`],
+                        ['Pressão Arterial', `${m.pressaoSistolica || 0}/${m.pressaoDiastolica || 0} mmHg`],
+                        ['Glicemia Capilar', `${m.glicemia || '--'} mg/dL`],
+                        ['RCQ', `${m.rcq || '--'}`],
+                        ['Circunferência Abdominal', `${m.circAbdominal || 0} cm`]
+                    ],
+                    headStyles: { fillColor: [0, 66, 83], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+                    bodyStyles: { fontSize: 10, cellPadding: 4, textColor: [60, 60, 60] },
+                    columnStyles: { 1: { fontStyle: 'bold', halign: 'left', textColor: [0, 66, 83] } },
+                    theme: 'grid',
+                    gridLineWidth: 0.1
+                });
+                const finalY = pdf.lastAutoTable.finalY + 15;
+                pdf.setFontSize(8);
+                pdf.setTextColor(180, 180, 180);
+                pdf.text("Documento gerado eletronicamente pelo Portal Vittalis Assessment", 105, finalY, { align: "center" });
+                window.open(pdf.output('bloburl'), '_blank');
+            } catch (e) { console.error("Erro no Laudo:", e); alert("Erro ao gerar laudo."); }
+        };
+
+        window.exportarDadosAnonimos = async () => {
+            try {
+                const usersSnap = await getDocs(collection(db, "users"));
+                const assessSnap = await getDocs(query(collection(db, "assessments"), orderBy("timestamp", "desc")));
+                const todasAvaliacoes = [];
+                assessSnap.forEach(doc => todasAvaliacoes.push(doc.data()));
+                let csvContent = "\ufeffIMC;P_Sistolica;P_Diastolica;FC_BPM;Perc_Gordura;Circ_Abdominal;Data\n";
+                usersSnap.forEach(uDoc => {
+                    const ultima = todasAvaliacoes.find(av => av.userId === uDoc.id);
+                    if (ultima) {
+                        const m = ultima.medicoes;
+                        const dataAv = ultima.timestamp?.toDate ? ultima.timestamp.toDate().toLocaleDateString() : "";
+                        const row = [m?.imc || "0", m?.pressaoSistolica || "0", m?.pressaoDiastolica || "0", m?.freqCardiaca || "0", m?.percGordura || "0", m?.circAbdominal || "0", dataAv].join(";");
+                        csvContent += row + "\n";
+                    }
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute("download", "vittalis_dados_estatisticos.csv");
+                link.click();
+            } catch (e) { console.error(e); alert("Erro ao exportar dados."); }
+        };
+
+        window.exportarPlanilhaCompleta = async () => {
+            try {
+                const usersSnap = await getDocs(collection(db, "users"));
+                const assessSnap = await getDocs(query(collection(db, "assessments"), orderBy("timestamp", "desc")));
+                const assessments = [];
+                assessSnap.forEach(doc => assessments.push(doc.data()));
+                
+                // CABEÇALHO ATUALIZADO COM TODAS AS NOVAS COLUNAS
+                let csvContent = "\ufeffNome;Tipo;CPF;Matricula;Data Nasc;Turma;Curso;Sexo;Telefone;QUADA_Motivacao;QUADA_Energetico;QUADA_Energetico_Freq;QUADA_Caneta;QUADA_Desjejum;QUADA_Refeicoes;QUADA_Intervalos;QUADA_Rotina;Hist_Diabetes;Hist_Hipertensao;Hist_Infarto;Hist_AVC;Hist_Obesidade;Hist_Cancer;Hist_Outros;Clin_Doencas;Clin_Medicamentos;Clin_Lesoes;Clin_Cirurgias;Sono_Qualidade;Tabaco;Tabaco_Freq;Alcool;Alcool_Freq;Tempo_Tela;Exercicios_Semana;Ativ_Natacao;Ativ_Academia;Ativ_Luta;Ativ_Outros;Dietas;Alergias_Complexo;Peso(kg);Altura(m);IMC;P_Sistolica;P_Diastolica;FC_BPM;Perc_Gordura;Circ_Abdominal\n";
+                
+                usersSnap.forEach(uDoc => {
+                    const user = uDoc.data();
+                    const lastEval = assessments.find(a => a.userId === uDoc.id);
+                    const sn = (v) => v ? "Sim" : "Não";
+                    const clean = (v) => v ? String(v).replace(/;/g, ",").replace(/[\r\n]+/g, " ") : "";
+
+                    const row = [
+                        user.nome || "", user.tipo || "Aluno", user.cpf || "", user.matricula || "N/A", user.dataNascimento || "", user.turma || "N/A", user.curso || "N/A", user.sexo || "", user.telefone || "",
+                        clean(lastEval?.quada?.motivacao),
+                        sn(lastEval?.quada?.tomaEnergetico),
+                        clean(lastEval?.quada?.energeticoDetalhe),
+                        sn(lastEval?.quada?.canetaEmagrecimento),
+                        clean(lastEval?.quada?.desjejum),
+                        clean(lastEval?.quada?.refeicoes),
+                        clean(lastEval?.quada?.intervalos),
+                        clean(lastEval?.quada?.rotina),
+                        sn(lastEval?.historicoFamiliar?.diabetes),
+                        sn(lastEval?.historicoFamiliar?.hipertensao),
+                        sn(lastEval?.historicoFamiliar?.infarto),
+                        sn(lastEval?.historicoFamiliar?.avc),
+                        sn(lastEval?.historicoFamiliar?.obesidade),
+                        sn(lastEval?.historicoFamiliar?.cancer),
+                        clean(lastEval?.historicoFamiliar?.outros),
+                        clean(lastEval?.perfilClinico?.doencasAtuais),
+                        clean(lastEval?.perfilClinico?.medicamentos),
+                        clean(lastEval?.perfilClinico?.lesoesAnteriores),
+                        clean(lastEval?.perfilClinico?.cirurgias),
+                        lastEval?.habitosVida?.qualidadeSono || "",
+                        sn(lastEval?.habitosVida?.usaTabaco),
+                        clean(lastEval?.habitosVida?.tabacoDetalhe),
+                        sn(lastEval?.habitosVida?.usaAlcool),
+                        clean(lastEval?.habitosVida?.alcoolDetalhe),
+                        clean(lastEval?.habitosVida?.tempoTela),
+                        lastEval?.habitosVida?.sessoesExercicios || "0",
+                        sn(lastEval?.habitosVida?.tiposAtividade?.natacao),
+                        sn(lastEval?.habitosVida?.tiposAtividade?.academia),
+                        sn(lastEval?.habitosVida?.tiposAtividade?.luta),
+                        clean(lastEval?.habitosVida?.outrosAtividade),
+                        clean(lastEval?.habitosVida?.dietasEspecificas),
+                        clean(lastEval?.habitosVida?.alergias),
+                        lastEval?.medicoes?.peso || "",
+                        lastEval?.medicoes?.altura || "",
+                        lastEval?.medicoes?.imc || "",
+                        lastEval?.medicoes?.pressaoSistolica || "",
+                        lastEval?.medicoes?.pressaoDiastolica || "",
+                        lastEval?.medicoes?.freqCardiaca || "",
+                        lastEval?.medicoes?.percGordura || "",
+                        lastEval?.medicoes?.circAbdominal || ""
+                    ].join(";");
+                    csvContent += row + "\n";
+                });
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute("download", "relatorio_institucional_vittalis.csv");
+                link.click();
+            } catch (e) { alert("Erro ao gerar planilha completa: " + e.message); }
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module">
+        import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        const db = getFirestore();
+        const auth = getAuth();
+        const GEMINI_API_KEY = "AIzaSyBURpH7gbmrbOPL54XxnEq_V7bQ6aczkNQ";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const messagesContainer = document.getElementById('maya-chat-messages');
+        const chatForm = document.getElementById('maya-chat-form');
+        const userInput = document.getElementById('maya-user-input');
+        let userLogged = null;
+
+        async function loadHistory(uid) {
+            messagesContainer.innerHTML = '';
+            const q = query(collection(db, "users", uid, "chats"), orderBy("timestamp", "asc"));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                appendMessageUI("Olá! Eu sou a **Maya**. 👋 Como posso ajudar você hoje?", false);
+                showSuggestions();
+            } else {
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    appendMessageUI(data.text, data.role === "user");
+                });
+            }
+        }
+
+        async function saveMessage(role, text) {
+            if (!userLogged) return;
+            try { await addDoc(collection(db, "users", userLogged.uid, "chats"), { role: role, text: text, timestamp: serverTimestamp() }); } catch (e) {}
+        }
+
+        function appendMessageUI(text, isUser = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex items-start gap-3 ${isUser ? 'justify-end' : ''}`;
+            const avatar = isUser ? '' : `<div class="w-8 h-8 rounded-full bg-[#004253] text-white flex items-center justify-center flex-shrink-0 shadow-sm"><span class="material-symbols-outlined text-lg text-white">smart_toy</span></div>`;
+            const bubbleClass = isUser ? 'bg-[#004253] text-white rounded-tr-none' : 'bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm';
+            msgDiv.innerHTML = `${!isUser ? avatar : ''}<div class="text-sm p-4 rounded-2xl max-w-[85%] leading-relaxed ${bubbleClass}">${isUser ? text : marked.parse(text)}</div>`;
+            messagesContainer.appendChild(msgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showSuggestions() {
+            const sugDiv = document.createElement('div');
+            sugDiv.id = 'maya-suggestions-container';
+            sugDiv.className = 'flex flex-col gap-2 mt-4';
+            sugDiv.innerHTML = `<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-1">Sugestões:</p><button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253]">O que é o Vittalis?</button><button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253]">Como faço uma avaliação?</button>`;
+            messagesContainer.appendChild(sugDiv);
+            sugDiv.querySelectorAll('.maya-sug-btn').forEach(btn => { btn.onclick = () => { sugDiv.remove(); handleSend(btn.innerText); }; });
+        }
+
+        const handleSend = async (text) => {
+            if (!text) return;
+            const sug = document.getElementById('maya-suggestions-container'); if(sug) sug.remove();
+            appendMessageUI(text, true);
+            await saveMessage("user", text);
+
+            const loadingIdStr = 'loading-' + Date.now(); 
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingIdStr;
+            loadingDiv.className = 'flex items-start gap-3';
+            loadingDiv.innerHTML = `<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><span class="material-symbols-outlined animate-spin text-lg text-slate-400">sync</span></div><div class="text-xs p-3 rounded-2xl italic text-slate-400 bg-white shadow-sm">Processando...</div>`;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        contents: [{ 
+                            role: "user", 
+                            parts: [{ text: "Atue como a Maya do Vittalis. Seja estritamente técnica, direta e objetiva. Não use apresentações iniciais. Responda: " + text }] 
+                        }] 
+                    }) 
+                });
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text;
+                const el = document.getElementById(loadingIdStr);
+                if(el) el.remove();
+                appendMessageUI(aiText, false);
+                await saveMessage("model", aiText);
+            } catch (e) {
+                const el = document.getElementById(loadingIdStr);
+                if(el) el.remove();
+                appendMessageUI("Erro ao conectar com a Maya.", false);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => { if (user) { userLogged = user; loadHistory(user.uid); } });
+        chatForm.onsubmit = (e) => { e.preventDefault(); const text = userInput.value.trim(); userInput.value = ''; handleSend(text); };
+        document.getElementById('maya-toggle-btn').onclick = () => document.getElementById('maya-chat-box').classList.toggle('hidden');
+        document.getElementById('maya-close-btn').onclick = () => document.getElementById('maya-chat-box').classList.add('hidden');
+    </script>
+    <!-- INÍCIO BLOCO VLIBRAS -->
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+        new window.VLibras.Widget('https://vlibras.gov.br/app');
+    </script>
+    <style>
+        .vw-access-button {
+            left: 20px !important;
+            right: auto !important;
+        }
+    </style>
+    <!-- FIM BLOCO VLIBRAS -->
+</body>
+</html>

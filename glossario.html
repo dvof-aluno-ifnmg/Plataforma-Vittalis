@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Glossário de Saúde</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#004253",
+                "surface": "#f8f9fa",
+                "on-surface": "#191c1d",
+                "on-surface-variant": "#40484c",
+                "outline-variant": "#bfc8cc",
+                "primary-fixed-dim": "#8dd0e9",
+                "error": "#ba1a1a" // ADICIONADO PARA O RELÓGIO FICAR VERMELHO
+              },
+              fontFamily: { "body": ["Inter"] }
+            }
+          }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { vertical-align: middle; }
+        body { font-family: 'Inter', sans-serif; }
+        
+        .glass-nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+        }
+        
+        .active-link { 
+            color: #004253 !important; 
+            border-bottom: 2px solid #004253;
+            padding-bottom: 4px;
+        }
+
+        /* Controle de animação do Layout */
+        #detail-view {
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .show-info #detail-view {
+            width: 45%;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #glossary-grid {
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- ESTILOS NOVOS DA MAYA --- */
+        .maya-scroll {
+            overflow-y: auto !important;
+            overscroll-behavior: contain;
+            scrollbar-width: thin; 
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .maya-scroll::-webkit-scrollbar { width: 5px; }
+        .maya-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+        @keyframes ai-very-soft-glow {
+            0% { box-shadow: 0 0 0 0 rgba(0, 66, 83, 0.1); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 66, 83, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 66, 83, 0); }
+        }
+        .maya-pulse-minimal { animation: ai-very-soft-glow 6s infinite; }
+
+        #maya-toggle-btn {
+            border-radius: 9999px !important;
+            padding: 0;
+            overflow: hidden;
+            background: transparent; /* Alterado para transparente */
+            border: none; /* Removida a borda */
+            cursor: pointer;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #maya-toggle-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Ajustado para preencher o espaço da imagem chat.png */
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased relative overflow-x-hidden">
+
+    <!-- NAVBAR -->
+    <nav id="mainNav" class="fixed top-0 left-0 w-full z-50 glass-nav shadow-sm py-4 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="text-2xl font-black tracking-tighter text-primary">Vittalis</div>
+            
+            <nav class="hidden md:flex items-center gap-8 font-medium">
+                <a href="home.html" class="text-on-surface-variant hover:text-primary transition-all uppercase text-xs font-bold tracking-widest">Home</a>
+                <a href="dashboard.html" class="text-on-surface-variant hover:text-primary transition-all uppercase text-xs font-bold tracking-widest">Dashboard</a>
+                
+                <!-- LINK DA NAVBAR COM SUPORTE A TIMER -->
+            
+
+                <a href="glossario.html" class="active-link uppercase text-xs font-bold tracking-widest">Glossário</a>
+                <a href="config.html" class="text-on-surface-variant hover:text-primary transition-all uppercase text-xs font-bold tracking-widest">Configurações</a>
+            </nav>
+
+            <div class="flex gap-6 items-center">
+                <button class="text-on-surface-variant hover:text-primary transition-all">
+                    <span class="material-symbols-outlined text-2xl">notifications</span>
+                </button>
+                <div onclick="window.location.href='config.html'" class="w-11 h-11 rounded-2xl bg-slate-200 border border-outline-variant/30 flex items-center justify-center overflow-hidden cursor-pointer hover:scale-105 transition-all shadow-sm relative">
+                    <span id="nav-profile-placeholder" class="material-symbols-outlined text-slate-500 text-3xl">person</span>
+                    <img id="nav-profile-img" src="" class="hidden w-full h-full object-cover absolute inset-0">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-container" class="pt-40 pb-24 max-w-7xl mx-auto px-8">
+        <header class="text-center mb-16">
+            <h1 class="text-5xl font-black tracking-tighter text-primary mb-4">Glossário de Saúde</h1>
+            <p class="text-xl text-on-surface-variant font-light max-w-2xl mx-auto">Conceitos técnicos simplificados para entender o desenvolvimento físico escolar.</p>
+        </header>
+
+        <div class="flex gap-0 md:gap-12 items-start">
+            <div id="detail-view" class="bg-white border border-outline-variant/30 p-10 shadow-xl sticky top-40">
+                <button onclick="closeDetail()" class="mb-8 p-2 hover:bg-slate-100 transition-colors border border-outline-variant/20 rounded-none">
+                    <span class="material-symbols-outlined text-primary">arrow_back</span>
+                </button>
+                <div class="space-y-6">
+                    <h2 id="detail-title" class="text-4xl font-black text-primary tracking-tighter leading-none">Título</h2>
+                    <div class="h-1 w-12 bg-primary"></div>
+                    <p id="detail-text" class="text-lg text-on-surface-variant leading-relaxed font-medium">Selecione um termo para ver a explicação detalhada.</p>
+                </div>
+                <div class="mt-12 pt-6 border-t border-slate-100 text-[10px] text-slate-400 uppercase font-bold tracking-widest">
+                    Fonte: Ministério da Saúde & OMS
+                </div>
+            </div>
+
+            <div id="glossary-grid" class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 h-fit">
+                <div class="md:col-span-5 bg-white p-8 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('IMC', 'O Índice de Massa Corporal (kg/m²) é a medida internacional usada para diagnosticar se um estudante está no peso ideal. Ele é fundamental para prevenir doenças futuras.')">
+                    <span class="material-symbols-outlined text-primary text-3xl mb-4">analytics</span>
+                    <h3 class="text-lg font-bold text-on-surface mb-2">IMC</h3>
+                    <p class="text-xs text-on-surface-variant mb-6">Estado nutricional e parâmetros globais.</p>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Ver Detalhes <span class="material-symbols-outlined text-xs">add</span></span>
+                </div>
+
+                <div class="md:col-span-7 bg-white p-8 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('Pressão Arterial', 'É a pressão que o sangue exerce nas artérias. Monitorar isso em crianças ajuda a detectar riscos silenciosos precocemente, garantindo um crescimento seguro.')">
+                    <span class="material-symbols-outlined text-primary text-3xl mb-4">monitor_heart</span>
+                    <h3 class="text-lg font-bold text-on-surface mb-2">Pressão Arterial</h3>
+                    <p class="text-xs text-on-surface-variant mb-6">Aferição sistólica e diastólica no ambiente pedagógico.</p>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Ver Detalhes <span class="material-symbols-outlined text-xs">add</span></span>
+                </div>
+
+                <div class="md:col-span-8 bg-white p-8 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('Combate à Obesidade', 'A obesidade não é apenas estética, é saúde. No Vittalis, usamos dados para criar um escudo de proteção para o aluno, alertando sobre riscos de sedentarismo e má alimentação.')">
+                    <span class="material-symbols-outlined text-primary text-3xl mb-4">health_and_safety</span>
+                    <h3 class="text-xl font-bold text-on-surface mb-2">Prevenção e Obesidade</h3>
+                    <p class="text-xs text-on-surface-variant mb-6">Como transformamos dados em ações de cuidado preventivo e suporte familiar.</p>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Ver Detalhes <span class="material-symbols-outlined text-xs">add</span></span>
+                </div>
+
+                <div class="md:col-span-4 bg-white p-8 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('Sedentarismo', 'O uso excessivo de telas sem atividade física gera fadiga crônica. Recomendamos 60 minutos de movimento diário para manter o metabolismo ativo.')">
+                    <span class="material-symbols-outlined text-primary text-3xl mb-4">directions_run</span>
+                    <h3 class="text-lg font-bold text-on-surface mb-2">Sedentarismo</h3>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Ver <span class="material-symbols-outlined text-xs">add</span></span>
+                </div>
+
+                <div class="md:col-span-12 bg-white p-10 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('Hidratação e Foco', 'O cérebro é 75% água. Manter-se hidratado durante as aulas melhora a memória curta, a concentração e previne dores de cabeça frequentes nos alunos.')">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="material-symbols-outlined text-primary text-3xl mb-4">water_drop</span>
+                            <h3 class="text-xl font-bold text-on-surface mb-2">Hidratação e Neuroplasticidade</h3>
+                            <p class="text-sm text-on-surface-variant max-w-xl">A influência direta da ingestão de água no rendimento acadêmico e na disposição física diária.</p>
+                        </div>
+                        <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Explorar Termo <span class="material-symbols-outlined text-xs">add</span></span>
+                    </div>
+                </div>
+
+                <div class="md:col-span-6 bg-white p-8 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('Educação Nutricional', 'Não se trata de proibição, mas de consciência. Entender o que compõe o prato ajuda o estudante a ter mais energia para esportes e estudos.')">
+                    <span class="material-symbols-outlined text-primary text-3xl mb-4">restaurant</span>
+                    <h3 class="text-lg font-bold text-on-surface mb-2">Educação Nutricional</h3>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Ver Detalhes <span class="material-symbols-outlined text-xs">add</span></span>
+                </div>
+
+                <div class="md:col-span-6 bg-white p-8 rounded-none border border-outline-variant/30 hover:border-primary transition-all cursor-pointer group flex flex-col justify-between" 
+                     onclick="openDetail('Qualidade do Sono', 'O sono é onde o aprendizado se consolida. Adolescentes precisam de 8 a 10 horas para restaurar as funções cognitivas e crescer de forma saudável.')">
+                    <span class="material-symbols-outlined text-primary text-3xl mb-4">bedtime</span>
+                    <h3 class="text-lg font-bold text-on-surface mb-2">Qualidade do Sono</h3>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">Ver Detalhes <span class="material-symbols-outlined text-xs">add</span></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- WIDGET DA MAYA (INTEGRADO) -->
+    <div id="maya-chat-widget" class="fixed bottom-6 right-6 z-50 font-inter">
+        <button id="maya-toggle-btn" class="shadow-2xl hover:scale-105 active:scale-95 transition-all maya-pulse-minimal">
+            <img src="img/chat.png" alt="Maya Chat">
+        </button>
+
+        <div id="maya-chat-box" class="hidden flex absolute bottom-20 right-0 w-[370px] h-[550px] max-h-[85vh] bg-white rounded-2xl shadow-2xl flex-col border border-slate-200 overflow-hidden transform origin-bottom-right transition-all">
+            <div class="bg-[#004253] text-white p-4 flex justify-between items-center shadow-md z-10 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-slate-100 flex items-center justify-center">
+                        <img src="img/maya.png" alt="Maya" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex flex-col">
+                        <h3 class="font-bold text-base leading-tight">Maya</h3>
+                        <p class="text-[10px] opacity-90 font-medium tracking-tight">Assistente Virtual do Portal Vittalis</p>
+                    </div>
+                </div>
+                <button id="maya-close-btn" class="hover:bg-white/10 p-1 rounded-full transition-colors">
+                    <span class="material-symbols-outlined text-xl text-white">close</span>
+                </button>
+            </div>
+
+            <div id="maya-chat-messages" class="flex-1 min-h-0 p-5 space-y-4 bg-slate-50/50 maya-scroll overflow-y-auto"></div>
+
+            <div class="p-4 bg-white border-t border-slate-100 flex-shrink-0">
+                <form id="maya-chat-form" class="flex items-center gap-2 relative">
+                    <input type="text" id="maya-user-input" autocomplete="off" placeholder="Escreva sua dúvida..." class="w-full h-12 pl-4 pr-12 bg-slate-100 border-none focus:ring-2 focus:ring-[#004253]/20 rounded-xl transition-all text-sm text-slate-700">
+                    <button type="submit" class="absolute right-1.5 w-9 h-9 bg-[#004253] text-white rounded-lg flex items-center justify-center hover:bg-[#005b71] transition-all">
+                        <span class="material-symbols-outlined text-xl text-white">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        function openDetail(title, text) {
+            document.getElementById('detail-title').innerText = title;
+            document.getElementById('detail-text').innerText = text;
+            document.body.classList.add('show-info');
+            window.scrollTo({ top: 200, behavior: 'smooth' });
+        }
+        function closeDetail() {
+            document.body.classList.remove('show-info');
+        }
+    </script>
+
+    <!-- FIREBASE E LÓGICA DA MAYA INTEGRADA -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+            authDomain: "site-tcc-abaa1.firebaseapp.com",
+            projectId: "site-tcc-abaa1",
+            storageBucket: "site-tcc-abaa1.firebasestorage.app",
+            messagingSenderId: "819270190928",
+            appId: "1:819270190928:web:523152052cdfb4247e4e55",
+            measurementId: "G-YLJ4TP0BFC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        const GEMINI_API_KEY = "AIzaSyBURpH7gbmrbOPL54XxnEq_V7bQ6aczkNQ";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        const messagesContainer = document.getElementById('maya-chat-messages');
+        const chatForm = document.getElementById('maya-chat-form');
+        const userInput = document.getElementById('maya-user-input');
+        let userLogged = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) { 
+                userLogged = user; 
+                loadHistory(user.uid); 
+                checkNavCooldown(user.uid); // CHAMADA DA FUNÇÃO DE TRAVA
+                
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().photoURL) {
+                    const navImg = document.getElementById('nav-profile-img');
+                    const navPlaceholder = document.getElementById('nav-profile-placeholder');
+                    navImg.src = userDoc.data().photoURL;
+                    navImg.classList.remove('hidden');
+                    navPlaceholder.classList.add('hidden');
+                }
+            } else { window.location.href = 'index.html'; }
+        });
+
+        // --- FUNÇÃO DE TRAVA DA NAVBAR (FIREBASE) ---
+        async function checkNavCooldown(uid) {
+            const q = query(collection(db, "assessments"), where("userId", "==", uid), orderBy("timestamp", "asc"));
+            const querySnapshot = await getDocs(q);
+            let historico = [];
+            querySnapshot.forEach((doc) => historico.push(doc.data()));
+
+            if (historico.length > 0) {
+                const ultimaAv = historico[historico.length - 1];
+                let dataUltima = ultimaAv.timestamp?.toDate ? ultimaAv.timestamp.toDate() : new Date(ultimaAv.timestamp || Date.now());
+                const intervaloTrava = 15 * 24 * 60 * 60 * 1000;
+                const dataDesbloqueio = new Date(dataUltima.getTime() + intervaloTrava);
+                const agora = new Date();
+
+                if (agora < dataDesbloqueio) {
+                    const timerNav = document.getElementById('timer-nav');
+                    const linkNav = document.getElementById('nav-av-link');
+
+                    const atualizar = () => {
+                        const tempo = dataDesbloqueio - new Date();
+                        if (tempo <= 0) { location.reload(); return; }
+                        const dias = Math.floor(tempo / (24 * 60 * 60 * 1000));
+                        const horas = Math.floor((tempo % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                        if(timerNav) { timerNav.innerText = `${dias}d ${horas}h`; timerNav.classList.remove('hidden'); }
+                    };
+
+                    atualizar();
+                    setInterval(atualizar, 3600000);
+
+                    if (linkNav) {
+                        linkNav.onclick = (e) => { e.preventDefault(); alert(`Acesso bloqueado. Próxima avaliação em ${dataDesbloqueio.toLocaleDateString()}.`); };
+                        linkNav.style.opacity = "0.5";
+                        linkNav.style.cursor = "not-allowed";
+                    }
+                }
+            }
+        }
+
+        async function loadHistory(uid) {
+            messagesContainer.innerHTML = '';
+            const q = query(collection(db, "users", uid, "chats"), orderBy("timestamp", "asc"));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                appendMessageUI("Como posso ajudar você hoje?", false);
+                showSuggestions();
+            } else { querySnapshot.forEach((doc) => { const data = doc.data(); appendMessageUI(data.text, data.role === "user"); }); }
+        }
+
+        async function saveMessage(role, text) {
+            if (!userLogged) return;
+            try { await addDoc(collection(db, "users", userLogged.uid, "chats"), { role: role, text: text, timestamp: serverTimestamp() }); } catch (e) {}
+        }
+
+        function appendMessageUI(text, isUser = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex items-start gap-3 ${isUser ? 'justify-end' : ''}`;
+            const avatar = isUser ? '' : `<div class="w-8 h-8 rounded-full bg-[#004253] text-white flex items-center justify-center flex-shrink-0 shadow-sm"><span class="material-symbols-outlined text-lg text-white">smart_toy</span></div>`;
+            const bubbleClass = isUser ? 'bg-[#004253] text-white rounded-tr-none' : 'bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm';
+            msgDiv.innerHTML = `${!isUser ? avatar : ''}<div class="text-sm p-4 rounded-2xl max-w-[85%] leading-relaxed ${bubbleClass}">${isUser ? text : marked.parse(text)}</div>`;
+            messagesContainer.appendChild(msgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showSuggestions() {
+            const sugDiv = document.createElement('div');
+            sugDiv.id = 'maya-suggestions-container';
+            sugDiv.className = 'flex flex-col gap-2 mt-4';
+            sugDiv.innerHTML = `<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-1">Sugestões Iniciais:</p><button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253] transition-all">O que é o Vittalis?</button><button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253] transition-all">Como faço uma avaliação?</button>`;
+            messagesContainer.appendChild(sugDiv);
+            sugDiv.querySelectorAll('.maya-sug-btn').forEach(btn => { btn.onclick = () => { sugDiv.remove(); handleSend(btn.innerText); }; });
+        }
+
+        const handleSend = async (text) => {
+            if (!text) return;
+            appendMessageUI(text, true);
+            await saveMessage("user", text);
+            const loadingId = 'loading-' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId; loadingDiv.className = 'flex items-start gap-3';
+            loadingDiv.innerHTML = `<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><span class="material-symbols-outlined animate-spin text-lg text-slate-400">sync</span></div><div class="text-xs p-3 rounded-2xl italic text-slate-400 bg-white shadow-sm">Processando...</div>`;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            try {
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        contents: [{ 
+                            role: "user", 
+                            parts: [{ text: "Atue como a Maya do Vittalis. Seja estritamente técnica, direta e objetiva. Não use apresentações iniciais ou frases como 'Eu sou a Maya'. Responda diretamente ao ponto: " + text }] 
+                        }] 
+                    }) 
+                });
+                const data = await response.json();
+                const aiText = data.candidates[0].content.parts[0].text;
+                document.getElementById(loadingId).remove();
+                appendMessageUI(aiText, false);
+                await saveMessage("model", aiText);
+            } catch (e) { document.getElementById(loadingId).remove(); appendMessageUI("Erro ao conectar com a Maya.", false); }
+        };
+
+        chatForm.onsubmit = (e) => { e.preventDefault(); const text = userInput.value.trim(); userInput.value = ''; handleSend(text); };
+        document.getElementById('maya-toggle-btn').onclick = () => document.getElementById('maya-chat-box').classList.toggle('hidden');
+        document.getElementById('maya-close-btn').onclick = () => document.getElementById('maya-chat-box').classList.add('hidden');
+    </script>
+    <!-- INÍCIO BLOCO VLIBRAS -->
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
+<style>
+    /* Move o botão para a esquerda para não tampar a Maya na direita */
+    .vw-access-button {
+        left: 20px !important;
+        right: auto !important;
+    }
+</style>
+<!-- FIM BLOCO VLIBRAS -->
+</body>
+</html>

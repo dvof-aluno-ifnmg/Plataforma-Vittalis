@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="light h-full" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Gestão de Cadastros</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; height: 100vh; }
+        
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(4px); 
+            z-index: 100; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 2rem;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .step-panel { display: none; }
+        .step-panel.active { display: block; animation: slideFadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes slideFadeUp { 0% { opacity: 0; transform: translateY(15px) scale(0.99); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        /* ANIMAÇÃO DOS PONTOS */
+        .dot { animation: bounce 1s infinite alternate; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-15px); } }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #004253; border-radius: 10px; }
+
+        .role-btn-active { border-color: #004253; background: #b7eaff10; color: #004253; border-width: 2px; }
+
+        #toast {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #004253;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 200;
+            font-weight: 700;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 2rem; opacity: 1; }
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: { "surface": "#F8F9FA", "primary": "#004253", "on-primary": "#ffffff" },
+              borderRadius: { "DEFAULT": "4px", "lg": "6px" },
+            },
+          },
+        }
+    </script>
+</head>
+<body class="text-slate-800 antialiased flex">
+
+    <div id="toast"></div>
+
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen shrink-0 z-50">
+        <div class="p-8">
+            <span class="text-2xl font-black text-[#004253] tracking-tighter">Vittalis</span>
+        </div>
+        <nav class="flex-grow px-4 space-y-2">
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-slate-400 hover:bg-slate-50 hover:text-[#004253] font-bold transition-all" href="admin.html">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="text-xs uppercase tracking-widest">Análise IA</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded text-slate-400 hover:bg-slate-50 hover:text-[#004253] font-bold transition-all" href="lancamento_admin.html">
+                <span class="material-symbols-outlined">edit_document</span>
+                <span class="text-xs uppercase tracking-widest">Lançamentos</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded bg-slate-50 text-[#004253] font-bold" href="cadastro_admin.html">
+                <span class="material-symbols-outlined">person_add</span>
+                <span class="text-xs uppercase tracking-widest">Cadastros</span>
+            </a>
+        </nav>
+        <div class="p-6 border-t border-slate-100">
+            <button onclick="logoutAdmin()" class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase hover:text-red-500">
+                <span class="material-symbols-outlined text-sm">logout</span> Sair
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-grow flex items-center justify-center p-12 overflow-hidden">
+        <div class="w-full max-w-5xl flex flex-col h-full max-h-[85vh]">
+            <div class="flex justify-between items-end mb-8 shrink-0">
+                <div>
+                    <h1 class="text-3xl font-black text-[#004253] uppercase tracking-tight">Gestão de Cadastros</h1>
+                    <p class="text-slate-500 font-medium">Gerencie usuários ou realize um novo registro no sistema.</p>
+                </div>
+                <button onclick="abrirModalCadastro()" class="bg-[#004253] text-white px-10 py-5 rounded font-black flex items-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">
+                    <span class="material-symbols-outlined">person_add</span> NOVO CADASTRO
+                </button>
+            </div>
+
+            <div class="bg-white rounded shadow-2xl border border-slate-200 overflow-hidden flex flex-col flex-grow">
+                <div class="overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                            <tr>
+                                <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</th>
+                                <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF</th>
+                                <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nascimento</th>
+                                <th class="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-alunos" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-cadastro" class="modal-overlay">
+        <div class="bg-white w-[85%] max-w-5xl h-[85vh] rounded shadow-2xl flex flex-col overflow-hidden relative">
+            
+            <!-- DIV DE CARREGAMENTO CORRIGIDA (CENTRO TOTAL) -->
+            <div id="loading-cad" class="absolute inset-0 bg-white/95 z-[120] hidden flex flex-col items-center justify-center">
+                <div class="flex gap-3">
+                    <div class="dot w-5 h-5 bg-[#004253] rounded-full"></div>
+                    <div class="dot w-5 h-5 bg-[#004253] rounded-full"></div>
+                    <div class="dot w-5 h-5 bg-[#004253] rounded-full"></div>
+                </div>
+                <p class="text-[#004253] font-bold text-sm tracking-widest uppercase mt-6">Criando Conta...</p>
+            </div>
+
+            <header class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+                <div>
+                    <h3 class="text-xl font-black text-[#004253] uppercase tracking-tight">Cadastrar Novo Paciente</h3>
+                    <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Acesso Institucional Vittalis</p>
+                </div>
+                <button onclick="fecharModalCadastro()"><span class="material-symbols-outlined text-slate-400">close</span></button>
+            </header>
+
+            <div class="flex-grow overflow-y-auto p-12 bg-white">
+                <div class="flex gap-4 mb-10 max-w-md mx-auto">
+                    <button id="btn-role-aluno" onclick="toggleRole('Aluno')" class="flex-1 p-4 rounded-xl border border-slate-200 font-bold text-sm transition-all role-btn-active">Aluno</button>
+                    <button id="btn-role-servidor" onclick="toggleRole('Servidor')" class="flex-1 p-4 rounded-xl border border-slate-200 font-bold text-sm transition-all text-slate-400">Servidor</button>
+                </div>
+
+                <form id="form-cadastro-admin" class="space-y-6 max-w-4xl mx-auto">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="col-span-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                            <input type="text" id="regNome" required class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">CPF</label>
+                            <input type="text" id="regCpf" required placeholder="000.000.000-00" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data de Nascimento</label>
+                            <input type="date" id="regNasc" required class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                        </div>
+                    </div>
+
+                    <div id="campos-aluno" class="grid grid-cols-3 gap-6">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Matrícula</label>
+                            <input type="text" id="regMatricula" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Turma</label>
+                            <select id="regTurma" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                                <option value="1º ano">1º ano</option>
+                                <option value="2º ano">2º ano</option>
+                                <option value="3º ano">3º ano</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Curso</label>
+                            <select id="regCurso" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                                <option value="Agropecuária">Agropecuária</option>
+                                <option value="Informática">Informática</option>
+                                <option value="VISA">VISA</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sexo</label>
+                            <select id="regSexo" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                                <option value="Masculino">Masculino</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Prefiro não Informar">Prefiro não Informar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Telefone</label>
+                            <input type="tel" id="regTelefone" required placeholder="(00) 00000-0000" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 pt-6 border-t border-slate-50">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Institucional</label>
+                            <input type="email" id="regEmail" required placeholder="aluno@institucional.edu.br" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                                <input type="password" id="regSenha" required class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
+                                <input type="password" id="regConfirmar" required class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-[#004253] text-white font-black py-5 rounded-xl shadow-2xl hover:scale-[1.01] active:scale-95 transition-all mt-8">FINALIZAR CADASTRO</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+            authDomain: "site-tcc-abaa1.firebaseapp.com",
+            projectId: "site-tcc-abaa1",
+            storageBucket: "site-tcc-abaa1.firebasestorage.app",
+            messagingSenderId: "819270190928",
+            appId: "1:819270190928:web:523152052cdfb4247e4e55",
+            measurementId: "G-YLJ4TP0BFC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let allUsers = [];
+        let currentRole = "Aluno";
+
+        onAuthStateChanged(auth, (user) => { if (!user) window.location.href = 'index.html'; else carregarAlunos(); });
+
+        async function carregarAlunos() {
+            const snap = await getDocs(collection(db, "users"));
+            allUsers = [];
+            snap.forEach(doc => allUsers.push({ id: doc.id, ...doc.data() }));
+            renderLista(allUsers);
+        }
+
+        function renderLista(lista) {
+            const container = document.getElementById('lista-alunos');
+            container.innerHTML = '';
+            lista.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-all group";
+                tr.innerHTML = `<td class="px-8 py-5 font-bold text-[#004253]">${u.nome}</td><td class="px-8 py-5 text-slate-500">${u.cpf || '--'}</td><td class="px-8 py-5 text-slate-500">${u.dataNascimento || '--'}</td><td class="px-8 py-5 text-right"><span class="text-[10px] font-bold text-green-600 bg-green-50 px-3 py-1 rounded">ATIVO</span></td>`;
+                container.appendChild(tr);
+            });
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            toast.style.backgroundColor = isError ? '#ef4444' : '#004253';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        window.abrirModalCadastro = () => document.getElementById('modal-cadastro').classList.add('active');
+        window.fecharModalCadastro = () => { document.getElementById('modal-cadastro').classList.remove('active'); document.getElementById('form-cadastro-admin').reset(); };
+
+        window.toggleRole = (role) => {
+            currentRole = role;
+            const btnA = document.getElementById('btn-role-aluno');
+            const btnS = document.getElementById('btn-role-servidor');
+            const campos = document.getElementById('campos-aluno');
+            if(role === 'Aluno') {
+                btnA.className = "flex-1 p-4 rounded-xl border border-slate-200 font-bold text-sm transition-all role-btn-active";
+                btnS.className = "flex-1 p-4 rounded-xl border border-slate-200 font-bold text-sm transition-all text-slate-400";
+                campos.classList.remove('hidden');
+            } else {
+                btnS.className = "flex-1 p-4 rounded-xl border border-slate-200 font-bold text-sm transition-all role-btn-active";
+                btnA.className = "flex-1 p-4 rounded-xl border border-slate-200 font-bold text-sm transition-all text-slate-400";
+                campos.classList.add('hidden');
+            }
+        };
+
+        document.getElementById('form-cadastro-admin').onsubmit = async (e) => {
+            e.preventDefault();
+            const senha = document.getElementById('regSenha').value;
+            const conf = document.getElementById('regConfirmar').value;
+
+            if(senha !== conf) return showToast("As senhas não coincidem!", true);
+            
+            document.getElementById('loading-cad').classList.remove('hidden');
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, document.getElementById('regEmail').value, senha);
+                const user = userCredential.user;
+
+                const userData = {
+                    nome: document.getElementById('regNome').value,
+                    cpf: document.getElementById('regCpf').value,
+                    dataNascimento: document.getElementById('regNasc').value,
+                    sexo: document.getElementById('regSexo').value,
+                    telefone: document.getElementById('regTelefone').value,
+                    email: user.email,
+                    tipo: currentRole,
+                    dataCadastro: serverTimestamp()
+                };
+
+                if (currentRole === 'Aluno') {
+                    userData.matricula = document.getElementById('regMatricula').value;
+                    userData.turma = document.getElementById('regTurma').value;
+                    userData.curso = document.getElementById('regCurso').value;
+                }
+
+                await setDoc(doc(db, "users", user.uid), userData);
+                
+                showToast("Cadastro realizado com sucesso!");
+                setTimeout(() => location.reload(), 2000);
+            } catch (error) {
+                document.getElementById('loading-cad').classList.add('hidden');
+                showToast("Erro ao cadastrar: " + error.message, true);
+            }
+        };
+
+        window.logoutAdmin = () => signOut(auth).then(() => window.location.href = 'index.html');
+    </script>
+</body>
+</html>

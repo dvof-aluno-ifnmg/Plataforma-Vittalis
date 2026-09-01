@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Autenticação</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#ffdcc0",
+                        "on-tertiary-fixed": "#2d1600",
+                        "tertiary-fixed-dim": "#fcb97c",
+                        "surface-variant": "#e1e3e4",
+                        "primary-fixed": "#b7eaff",
+                        "surface-dim": "#d9dadb",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "tertiary": "#5c3200",
+                        "secondary-fixed": "#d1e5f6",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed-variant": "#364956",
+                        "tertiary-container": "#784815",
+                        "primary-fixed-dim": "#8dd0e9",
+                        "primary-container": "#005b71",
+                        "surface-container": "#edeeef",
+                        "on-background": "#191c1d",
+                        "on-tertiary-container": "#fdba7d",
+                        "surface": "#f8f9fa",
+                        "surface-bright": "#f8f9fa",
+                        "inverse-primary": "#8dd0e9",
+                        "on-primary-container": "#8ed1ea",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#19667d",
+                        "outline-variant": "#bfc8cc",
+                        "inverse-surface": "#2e3132",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "secondary": "#4e616f",
+                        "on-primary-fixed-variant": "#004e61",
+                        "outline": "#70787d",
+                        "secondary-fixed-dim": "#b5c9d9",
+                        "secondary-container": "#d1e5f6",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary-container": "#546775",
+                        "on-surface": "#191c1d",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#091e29",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-tertiary-fixed-variant": "#693c08",
+                        "on-surface-variant": "#40484c",
+                        "primary": "#004253"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar para o painel de formulário */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #bfc8cc; border-radius: 10px; }
+        
+        /* Lógica dos Botões Login / Cadastro (Sem JS) */
+        #register-toggle:checked ~ #login-form { display: none; }
+        #register-toggle:checked ~ #register-form { display: block; }
+        #register-toggle:not(:checked) ~ #register-form { display: none; }
+
+        #register-toggle:not(:checked) ~ .toggle-nav #login-label { background: #004253; color: white; }
+        #register-toggle:not(:checked) ~ .toggle-nav #register-label { color: #40484c; }
+        #register-toggle:checked ~ .toggle-nav #register-label { background: #004253; color: white; }
+        #register-toggle:checked ~ .toggle-nav #login-label { color: #40484c; }
+
+        /* Lógica dos Botões Aluno / Servidor (Sem JS) */
+        #staff-role-toggle:checked ~ form #student-fields { display: none; }
+        
+        #staff-role-toggle:not(:checked) ~ .role-nav #student-role-btn { border-color: #004253; background: #b7eaff10; color: #004253; }
+        #staff-role-toggle:checked ~ .role-nav #staff-role-btn { border-color: #004253; background: #b7eaff10; color: #004253; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col relative">
+
+    <nav class="bg-transparent text-cyan-900 dark:text-cyan-50 font-inter antialiased tracking-tight w-full top-0 left-0 absolute flex justify-between items-center px-8 py-6 max-w-full z-50">
+        <div class="text-xl font-bold text-white tracking-tighter drop-shadow-sm">Vittalis</div>
+        <div class="flex gap-6 items-center">
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col md:flex-row min-h-screen">
+        <section class="hidden md:flex md:w-3/5 relative items-center justify-center overflow-hidden bg-[#e0f2f1]">
+            <div class="absolute inset-0">
+                <img alt="Fundo Vittalis" class="w-full h-full object-cover" src="img/login1.jpg"/>
+                <div class="absolute inset-0 bg-gradient-to-r from-[#004253]/40 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            </div>
+            <div class="relative z-10 max-w-xl px-12 flex flex-col items-center text-center">
+                <h1 class="text-5xl font-extrabold tracking-tight mb-6 leading-tight text-white drop-shadow-lg">Precisão em Saúde Escolar.</h1>
+                <p class="text-lg text-white/95 font-medium mb-12 leading-relaxed drop-shadow-md">
+                    Uma plataforma projetada para o monitoramento meticuloso do bem-estar dos alunos e conformidade com a saúde institucional. Segura, privada e precisa.
+                </p>
+            </div>
+        </section>
+
+        <section class="w-full md:w-2/5 bg-surface-container-lowest flex items-center justify-center p-8 md:p-16 overflow-y-auto custom-scrollbar">
+            <div class="w-full max-w-md mt-16 md:mt-0 relative">
+                
+                <input class="hidden" id="register-toggle" type="checkbox"/>
+                
+                <div class="toggle-nav flex justify-center mb-10 p-1 bg-surface-container-low rounded-lg w-fit mx-auto">
+                    <label class="cursor-pointer px-6 py-2 rounded-md transition-all font-semibold text-sm select-none" for="register-toggle" id="login-label">
+                        Login
+                    </label>
+                    <label class="cursor-pointer px-6 py-2 rounded-md transition-all font-semibold text-sm select-none" for="register-toggle" id="register-label">
+                        Cadastro
+                    </label>
+                </div>
+
+                <div id="login-form">
+                    <header class="mb-8">
+                        <h2 class="text-2xl font-bold text-on-background tracking-tight">Bem-vindo de volta</h2>
+                        <p class="text-on-surface-variant text-sm mt-1">Acesse sua conta institucional para continuar.</p>
+                    </header>
+                    <form id="formAuthLogin" class="space-y-5">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">E-mail Institucional</label>
+                            <input id="loginEmail" class="w-full h-12 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all text-on-surface" placeholder="nome@escola.edu.br" type="email" required/>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Senha</label>
+                                <a id="btnForgotPassword" class="text-xs font-medium text-primary hover:underline cursor-pointer" href="#">Esqueceu a senha?</a>
+                            </div>
+                            <div class="relative">
+                                <input id="loginSenha" class="w-full h-12 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all text-on-surface" placeholder="••••••••" type="password" required/>
+                                <button id="btnToggleLogin" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+                                    <span class="material-symbols-outlined text-xl">visibility</span>
+                                </button>
+                            </div>
+                        </div>
+                        <button id="btnLoginSubmit" class="w-full h-12 flex justify-center items-center bg-primary text-on-primary font-bold rounded-lg hover:bg-primary-container transition-all shadow-sm active:scale-95" type="submit">
+                            Entrar
+                        </button>
+                    </form>
+                </div>
+
+                <div id="register-form">
+                    <header class="mb-6">
+                        <h2 class="text-2xl font-bold text-on-background tracking-tight">Criar nova conta</h2>
+                        <p class="text-on-surface-variant text-sm mt-1">Selecione seu perfil para iniciar o cadastro.</p>
+                    </header>
+                    
+                    <input class="hidden" id="staff-role-toggle" type="checkbox"/>
+                    
+                    <div class="role-nav flex gap-4 mb-8">
+                        <label class="flex-1 cursor-pointer border border-outline-variant/30 p-3 rounded-lg text-center transition-all select-none" for="staff-role-toggle" id="student-role-btn">
+                            <span class="block font-bold text-sm">Aluno</span>
+                        </label>
+                        <label class="flex-1 cursor-pointer border border-outline-variant/30 p-3 rounded-lg text-center transition-all select-none" for="staff-role-toggle" id="staff-role-btn">
+                            <span class="block font-bold text-sm">Servidor</span>
+                        </label>
+                    </div>
+
+                    <form id="formAuthRegister" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2 space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Nome Completo</label>
+                                <input id="regNome" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="text" required/>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">CPF</label>
+                                <input id="regCpf" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" placeholder="000.000.000-00" type="text" maxlength="14" required/>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Data de Nasc.</label>
+                                <input id="regNasc" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="date" required/>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4" id="student-fields">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Matrícula (Cajuí)</label>
+                                    <input id="regMatricula" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="text"/>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Turma</label>
+                                    <select id="regTurma" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all">
+                                        <option value="1º ano">1º ano</option>
+                                        <option value="2º ano">2º ano</option>
+                                        <option value="3º ano">3º ano</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Curso</label>
+                                <input id="regCurso" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="text"/>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Sexo Biológico</label>
+                                <select id="regSexo" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all">
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Feminino">Feminino</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Telefone</label>
+                                <input id="regTelefone" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" placeholder="(00) 00000-0000" type="tel" maxlength="15" required/>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">E-mail Institucional</label>
+                            <input id="regEmail" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="email" required/>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Senha</label>
+                                <div class="relative">
+                                    <input id="regSenha" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="password" required/>
+                                    <button id="btnToggleReg" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+                                        <span class="material-symbols-outlined text-xl">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Confirmar</label>
+                                <div class="relative">
+                                    <input id="regConfirmar" class="w-full h-11 px-4 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest rounded-lg transition-all" type="password" required/>
+                                    <button id="btnToggleRegConf" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+                                        <span class="material-symbols-outlined text-xl">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-3 py-2">
+                            <input class="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" required="" type="checkbox"/>
+                            <label class="text-xs text-on-surface-variant leading-normal">
+                                Estou ciente e concordo com os <a class="text-primary hover:underline" href="#">Termos de Serviço</a> e a <a class="text-primary hover:underline" href="#">Política de Privacidade</a> de acordo com a LGPD.
+                            </label>
+                        </div>
+                        <button id="btnRegSubmit" class="w-full h-12 flex justify-center items-center bg-primary text-on-primary font-bold rounded-lg hover:bg-primary-container transition-all shadow-sm mt-2 active:scale-95" type="submit">
+                            Finalizar Cadastro
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3"></div>
+
+    <script type="module">
+        // Importações necessárias do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+        // Sua configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+            authDomain: "site-tcc-abaa1.firebaseapp.com",
+            projectId: "site-tcc-abaa1",
+            storageBucket: "site-tcc-abaa1.firebasestorage.app",
+            messagingSenderId: "819270190928",
+            appId: "1:819270190928:web:523152052cdfb4247e4e55",
+            measurementId: "G-YLJ4TP0BFC"
+        };
+
+        // Inicializando o Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- LÓGICA DE NOTIFICAÇÕES (TOAST) E LOADING ---
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-[#004253] text-white' : 'bg-red-50 text-red-700 border border-red-200';
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            
+            toast.className = `px-5 py-3 rounded-lg shadow-xl text-sm font-medium transition-all duration-300 transform translate-y-full opacity-0 flex items-center gap-3 ${bgColor}`;
+            toast.innerHTML = `<span class="material-symbols-outlined text-xl">${icon}</span> ${message}`;
+            
+            toastContainer.appendChild(toast);
+            
+            // Animação de entrada
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-full', 'opacity-0');
+            });
+            
+            // Animação de saída
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function toggleLoading(btnId, isLoading, originalText) {
+            const btn = document.getElementById(btnId);
+            if (isLoading) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-xl mr-2">progress_activity</span> Carregando...`;
+                btn.classList.add('opacity-80', 'cursor-not-allowed');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+            }
+        }
+
+        // --- LÓGICA DE MÁSCARAS DE INPUT ---
+        const inputCpf = document.getElementById('regCpf');
+        inputCpf.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, "");
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            e.target.value = value;
+        });
+
+        const inputTel = document.getElementById('regTelefone');
+        inputTel.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, "");
+            value = value.replace(/(\d{2})(\d)/, "($1) $2");
+            value = value.replace(/(\d{5})(\d)/, "$1-$2");
+            e.target.value = value;
+        });
+
+        // --- LÓGICA DOS OLHINHOS DE SENHA ---
+        function setupPasswordToggle(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            const input = document.getElementById(inputId);
+            if(btn && input) {
+                btn.addEventListener('click', () => {
+                    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                    input.setAttribute('type', type);
+                    btn.querySelector('span').textContent = type === 'password' ? 'visibility' : 'visibility_off';
+                });
+            }
+        }
+        setupPasswordToggle('btnToggleLogin', 'loginSenha');
+        setupPasswordToggle('btnToggleReg', 'regSenha');
+        setupPasswordToggle('btnToggleRegConf', 'regConfirmar');
+
+        // --- LÓGICA DE RECUPERAÇÃO DE SENHA ---
+        const btnForgotPassword = document.getElementById('btnForgotPassword');
+        btnForgotPassword.addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            
+            if (!email) {
+                showToast("Por favor, digite seu e-mail institucional no campo acima para recuperar a senha.", "error");
+                return;
+            }
+
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    showToast("E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada.", "success");
+                })
+                .catch((error) => {
+                    console.error("Erro ao enviar e-mail de recuperação:", error);
+                    let msg = "Erro ao enviar e-mail de recuperação.";
+                    if(error.code === 'auth/user-not-found') msg = "Usuário não encontrado com este e-mail.";
+                    if(error.code === 'auth/invalid-email') msg = "E-mail inválido.";
+                    showToast(msg, "error");
+                });
+        });
+
+        // --- LÓGICA DE LOGIN FIREBASE ---
+        const formLogin = document.getElementById('formAuthLogin');
+        formLogin.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginSenha').value;
+
+            toggleLoading('btnLoginSubmit', true, 'Entrar');
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then(async (userCredential) => {
+                    const user = userCredential.user;
+                    
+                    // BUSCAR O DOCUMENTO DO USUÁRIO PARA VERIFICAR A ROLE
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    
+                    showToast("Login realizado com sucesso! Redirecionando...", "success");
+                    
+                    setTimeout(() => {
+                        // VERIFICA SE É ADMIN OU USUÁRIO COMUM
+                        if (userDoc.exists() && userDoc.data().role === "admin") {
+                            window.location.href = "admin.html";
+                        } else {
+                            window.location.href = "home.html";
+                        }
+                    }, 1500);
+                })
+                .catch((error) => {
+                    console.error("Erro no login:", error);
+                    let msg = "Erro ao logar. Verifique suas credenciais.";
+                    if(error.code === 'auth/invalid-credential') msg = "E-mail ou senha incorretos.";
+                    showToast(msg, "error");
+                    toggleLoading('btnLoginSubmit', false, 'Entrar');
+                });
+        });
+
+        // --- LÓGICA DE CADASTRO FIREBASE ---
+        const formRegister = document.getElementById('formAuthRegister');
+        formRegister.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const senha = document.getElementById('regSenha').value;
+            const confirmar = document.getElementById('regConfirmar').value;
+
+            if (senha !== confirmar) {
+                showToast("As senhas não coincidem!", "error");
+                return;
+            }
+
+            if (senha.length < 6) {
+                showToast("A senha deve ter pelo menos 6 caracteres.", "error");
+                return;
+            }
+
+            const email = document.getElementById('regEmail').value;
+            const isStaff = document.getElementById('staff-role-toggle').checked;
+
+            toggleLoading('btnRegSubmit', true, 'Finalizar Cadastro');
+
+            createUserWithEmailAndPassword(auth, email, senha)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    
+                    // Monta o objeto de dados dependendo se é aluno ou servidor
+                    const userData = {
+                        nome: document.getElementById('regNome').value,
+                        cpf: document.getElementById('regCpf').value,
+                        dataNascimento: document.getElementById('regNasc').value,
+                        sexo: document.getElementById('regSexo').value,
+                        telefone: document.getElementById('regTelefone').value,
+                        email: email,
+                        tipo: isStaff ? 'Servidor' : 'Aluno',
+                        dataCadastro: new Date()
+                    };
+
+                    // Adiciona campos de aluno se não for servidor
+                    if (!isStaff) {
+                        userData.matricula = document.getElementById('regMatricula').value;
+                        userData.turma = document.getElementById('regTurma').value;
+                        userData.curso = document.getElementById('regCurso').value;
+                    }
+
+                    // Salva os dados no Firestore na coleção "users"
+                    return setDoc(doc(db, "users", user.uid), userData);
+                })
+                .then(() => {
+                    showToast("Conta criada com sucesso! Faça seu login.", "success");
+                    document.getElementById('register-toggle').checked = false; // Volta pro form de login
+                    formRegister.reset();
+                })
+                .catch((error) => {
+                    console.error("Erro no cadastro:", error);
+                    let msg = "Falha no cadastro.";
+                    if(error.code === 'auth/email-already-in-use') msg = "Este e-mail já está em uso.";
+                    showToast(msg, "error");
+                })
+                .finally(() => {
+                    toggleLoading('btnRegSubmit', false, 'Finalizar Cadastro');
+                });
+        });
+    </script>
+    <!-- INÍCIO BLOCO VLIBRAS -->
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
+<style>
+    /* Move o botão para a esquerda para não tampar a Maya na direita */
+    .vw-access-button {
+        left: 20px !important;
+        right: auto !important;
+    }
+</style>
+<!-- FIM BLOCO VLIBRAS -->
+</body>
+</html>

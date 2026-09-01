@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html class="h-full" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <script id="tailwind-config">
+      tailwind.config = {
+        theme: {
+          extend: {
+            "colors": {
+                "primary": "#004253",
+                "background": "#f8f9fa",
+                "danger-cold": "#4c1d95", 
+                "warning-cold": "#1e40af"
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        .ice-card {
+            background: #ffffff;
+            border: none;
+            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            border-radius: 4px; 
+        }
+
+        .clinical-gradient { 
+            background: linear-gradient(135deg, #004253 0%, #005b71 100%); 
+            box-shadow: 0 4px 12px rgba(0, 66, 83, 0.15);
+            border-radius: 4px;
+        }
+
+        .sidebar-active { background-color: #f8fafc; color: #004253 !important; border-radius: 4px; }
+        
+        .modal-overlay { 
+            display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; padding: 24px;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .ai-report h2 { color: #004253; font-weight: 800; margin-top: 15px; font-size: 14px; text-transform: uppercase; border-left: 4px solid #004253; padding-left: 10px; }
+        .ai-report p { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 10px; text-align: justify; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #004253; border-radius: 10px; }
+
+        button, select, input { border-radius: 4px !important; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex">
+
+<aside class="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen shrink-0 z-50">
+    <div class="p-8">
+        <span class="text-2xl font-black text-[#004253] tracking-tighter">Vittalis</span>
+    </div>
+    <nav class="flex-grow px-4 space-y-2">
+        <a class="flex items-center gap-3 px-4 py-3 rounded bg-slate-50 text-[#004253] font-bold" href="admin.html">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="text-xs uppercase tracking-widest">Análise IA</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 rounded text-slate-400 hover:bg-slate-50 hover:text-[#004253] font-bold transition-all" href="lancamento_admin.html">
+            <span class="material-symbols-outlined">edit_document</span>
+            <span class="text-xs uppercase tracking-widest">Lançamentos</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 rounded text-slate-400 hover:bg-slate-50 hover:text-[#004253] font-bold transition-all" href="cadastro_admin.html">
+            <span class="material-symbols-outlined">person_add</span>
+            <span class="text-xs uppercase tracking-widest">Cadastros</span>
+        </a>
+    </nav>
+    <div class="p-6 border-t border-slate-100">
+        <button onclick="logoutAdmin()" class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase hover:text-red-500">
+            <span class="material-symbols-outlined text-sm">logout</span> Sair
+        </button>
+    </div>
+</aside>
+
+<div class="flex flex-col flex-grow">
+    <header class="h-24 px-10 flex items-center justify-between shrink-0">
+        <div>
+            <h1 class="text-2xl font-bold text-[#004253]">Painel de Vigilância</h1>
+            <p class="text-xs text-slate-500 font-medium uppercase tracking-widest">Análise Institucional e Inteligência Maya</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="abrirModalReset()" class="bg-[#004253] text-white px-8 py-3 rounded font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2 shadow-xl shadow-primary/20">
+                <span class="material-symbols-outlined text-sm">history</span> Resetar Lançamentos
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow px-10 py-4 max-w-7xl mx-auto w-full">
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="ice-card p-8">
+                <span class="material-symbols-outlined text-primary mb-4">groups</span>
+                <div id="stat-total-alunos" class="text-4xl font-black text-primary">--</div>
+                <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">Alunos/Servidores</div>
+            </div>
+            <div class="ice-card p-8">
+                <span class="material-symbols-outlined text-primary mb-4">assignment_turned_in</span>
+                <div id="stat-total-avaliacoes" class="text-4xl font-black text-primary">--</div>
+                <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">Total Avaliações</div>
+            </div>
+            <div class="clinical-gradient p-8 text-white">
+                <span class="material-symbols-outlined text-white/50 mb-4">monitoring</span>
+                <div id="stat-imc-medio" class="text-4xl font-black">--</div>
+                <div class="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">IMC Médio</div>
+            </div>
+            <div class="ice-card p-8">
+                <span class="material-symbols-outlined text-green-500 mb-4">check_circle</span>
+                <div id="stat-percent-saudavel" class="text-4xl font-black text-green-600">--%</div>
+                <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1">Faixa Saudável</div>
+            </div>
+        </section>
+
+        <section class="mb-10">
+            <div class="ice-card overflow-hidden">
+                <div class="bg-primary p-6 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-white animate-pulse text-3xl">auto_awesome</span>
+                        <div>
+                            <h2 class="text-white font-black text-xs uppercase tracking-[0.3em]">Maya Health Analytics</h2>
+                            <p class="text-[9px] text-white/50 uppercase font-bold">Relatório de Inteligência Populacional</p>
+                        </div>
+                    </div>
+                    <button onclick="gerarAuditoriaIA()" id="btn-ia" class="bg-white text-primary px-8 py-3 rounded font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl">
+                        Realizar Análise
+                    </button>
+                </div>
+                <div id="container-ia" class="p-10 hidden bg-white border-x border-b border-slate-50">
+                    <div id="texto-ia" class="ai-report markdown-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ice-card p-10 mb-10">
+            <h2 class="text-center text-sm font-black text-primary uppercase tracking-[0.3em] mb-12">Classificação Demográfica de Saúde</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="h-80">
+                    <canvas id="bar-chart-imc"></canvas>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Abaixo do Peso</span><span id="label-abaixo" class="font-black text-slate-400 text-sm">0%</span></div>
+                        <div class="w-full bg-slate-50 h-2"><div id="bar-abaixo" class="bg-slate-300 h-full transition-all duration-1000" style="width: 0%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-[10px] font-black text-primary uppercase tracking-widest">Normal</span><span id="label-normal" class="font-black text-primary text-sm">0%</span></div>
+                        <div class="w-full bg-slate-50 h-2"><div id="bar-normal" class="bg-primary h-full transition-all duration-1000" style="width: 0%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-[10px] font-black text-warning-cold uppercase tracking-widest">Sobrepeso</span><span id="label-sobre" class="font-black text-warning-cold text-sm">0%</span></div>
+                        <div class="w-full bg-slate-50 h-2"><div id="bar-sobre" class="bg-warning-cold h-full transition-all duration-1000" style="width: 0%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-[10px] font-black text-danger-cold uppercase tracking-widest">Obesidade</span><span id="label-obeso" class="font-black text-danger-cold text-sm">0%</span></div>
+                        <div class="w-full bg-slate-50 h-2"><div id="bar-obeso" class="bg-danger-cold h-full transition-all duration-1000" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ice-card p-10 mb-20">
+            <h2 class="text-sm font-black text-primary uppercase tracking-[0.2em] mb-8">Tendência Individual</h2>
+            <div class="flex flex-col md:flex-row gap-10">
+                <div class="md:w-1/4">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pesquisar Estudante</label>
+                    <select id="user-selector" class="w-full mt-1 p-4 bg-slate-50 border-none text-xs focus:ring-2 focus:ring-primary/20 transition-all">
+                        <option value="">Selecione um aluno...</option>
+                    </select>
+                </div>
+                <div class="md:w-3/4 h-72">
+                    <canvas id="user-bmi-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+            <div class="ice-card p-10 flex flex-col justify-between">
+                <div><h3 class="text-lg font-black text-primary uppercase mb-2">Dados Anonimizados</h3><p class="text-sm text-slate-400 mb-8">Exportação para pesquisa acadêmica.</p></div>
+                <button onclick="exportarDadosAnonimos()" class="w-full border-2 border-primary text-primary font-black py-4 hover:bg-primary hover:text-white transition-all text-xs uppercase tracking-widest">Baixar CSV Anônimo</button>
+            </div>
+            <div class="ice-card p-10 flex flex-col justify-between border-t-4 border-primary">
+                <div><h3 class="text-lg font-black text-primary uppercase mb-2">Relatório Completo</h3><p class="text-sm text-slate-400 mb-8">Contém dados sensíveis (LGPD).</p></div>
+                <button onclick="exportarPlanilhaCompleta()" class="w-full bg-primary text-white font-black py-4 hover:opacity-90 shadow-xl shadow-primary/20 transition-all text-xs uppercase tracking-widest">Gerar Planilha Completa</button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="modal-reset" class="modal-overlay">
+    <div class="bg-white w-full max-w-lg shadow-2xl p-12 text-center border-none">
+        <span class="material-symbols-outlined text-danger-cold text-5xl mb-6">warning</span>
+        <h2 class="text-xl font-black text-primary uppercase mb-4">Renovação de Ciclo</h2>
+        <p class="text-slate-400 text-sm mb-10 leading-relaxed">Isso gerará um backup automático e limpará todas as avaliações do banco para a próxima etapa da pesquisa.</p>
+        <div class="space-y-4 mb-10 text-left">
+            <input type="password" id="reset-pass-1" class="w-full p-4 bg-slate-50 border-none text-sm" placeholder="Senha do Administrador">
+            <input type="password" id="reset-pass-2" class="w-full p-4 bg-slate-50 border-none text-sm" placeholder="Confirmar Senha">
+        </div>
+        <div class="flex gap-4">
+            <button onclick="fecharModalReset()" class="flex-1 py-4 font-bold text-slate-300 uppercase text-xs">Cancelar</button>
+            <button onclick="confirmarLimpezaFinal()" class="flex-1 bg-red-600 text-white py-4 font-black uppercase text-xs shadow-xl">Limpar Agora</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+        authDomain: "site-tcc-abaa1.firebaseapp.com",
+        projectId: "site-tcc-abaa1",
+        storageBucket: "site-tcc-abaa1.firebasestorage.app",
+        messagingSenderId: "819270190928",
+        appId: "1:819270190928:web:523152052cdfb4247e4e55",
+        measurementId: "G-YLJ4TP0BFC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let allUsers = [];
+    let allAssessments = [];
+    let userBmiChart = null;
+    const GEMINI_API_KEY = "AIzaSyBURpH7gbmrbOPL54XxnEq_V7bQ6aczkNQ";
+
+    onAuthStateChanged(auth, (user) => { if (!user) window.location.href = 'index.html'; else loadAdminData(); });
+
+    async function loadAdminData() {
+        const uSnap = await getDocs(collection(db, "users"));
+        allUsers = []; uSnap.forEach(d => allUsers.push({id: d.id, ...d.data()}));
+        const aSnap = await getDocs(query(collection(db, "assessments"), orderBy("timestamp", "asc")));
+        allAssessments = []; aSnap.forEach(d => allAssessments.push(d.data()));
+        document.getElementById('stat-total-alunos').innerText = allUsers.length;
+        document.getElementById('stat-total-avaliacoes').innerText = allAssessments.length;
+        let imcSum = 0, imcCount = 0;
+        let cats = { abaixo: 0, normal: 0, sobrepeso: 0, obeso: 0 };
+        allAssessments.forEach(data => {
+            const imc = data.medicoes?.imc;
+            if (imc) {
+                imcSum += imc; imcCount++;
+                if (imc < 18.5) cats.abaixo++;
+                else if (imc <= 24.9) cats.normal++;
+                else if (imc <= 29.9) cats.sobrepeso++;
+                else cats.obeso++;
+            }
+        });
+        document.getElementById('stat-imc-medio').innerText = imcCount > 0 ? (imcSum/imcCount).toFixed(1) : "0";
+        document.getElementById('stat-percent-saudavel').innerText = imcCount > 0 ? Math.round((cats.normal/imcCount)*100) + '%' : '0%';
+        const updateB = (id, count) => {
+            const p = imcCount > 0 ? Math.round((count / imcCount) * 100) : 0;
+            const bar = document.getElementById('bar-' + id);
+            const label = document.getElementById('label-' + id);
+            if(bar) bar.style.width = p + '%';
+            if(label) label.innerText = p + '%';
+        };
+        updateB('abaixo', cats.abaixo);
+        updateB('normal', cats.normal);
+        updateB('sobre', cats.sobrepeso);
+        updateB('obeso', cats.obeso);
+        renderChartGeral(cats);
+        populateUserSelector();
+    }
+
+    function renderChartGeral(c) {
+        new Chart(document.getElementById('bar-chart-imc'), {
+            type: 'bar',
+            data: {
+                labels: ['Abaixo', 'Normal', 'Sobrepeso', 'Obesidade'],
+                datasets: [{ 
+                    data: [c.abaixo, c.normal, c.sobrepeso, c.obeso], 
+                    backgroundColor: ['#e2e8f0', '#004253', '#1e40af', '#4c1d95'], 
+                    borderRadius: 0 
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+
+    function populateUserSelector() {
+        const selector = document.getElementById('user-selector');
+        selector.innerHTML = '<option value="">Escolher Estudante...</option>';
+        allUsers.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(user => {
+            const opt = document.createElement('option'); opt.value = user.id; opt.innerText = user.nome; selector.appendChild(opt);
+        });
+        selector.onchange = (e) => updateBmiChart(e.target.value);
+    }
+
+    function updateBmiChart(uid) {
+        if (!uid) return;
+        const evals = allAssessments.filter(a => a.userId === uid);
+        const labels = evals.map((_, i) => `Av. ${i + 1}`);
+        const data = evals.map(a => a.medicoes?.imc || 0);
+        if (userBmiChart) userBmiChart.destroy();
+        userBmiChart = new Chart(document.getElementById('user-bmi-chart'), {
+            type: 'line',
+            data: { labels: labels, datasets: [{ label: 'IMC', data: data, borderColor: '#004253', tension: 0, fill: true, backgroundColor: 'rgba(0,66,83,0.05)', borderWidth: 2 }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    window.gerarAuditoriaIA = async () => {
+        const btn = document.getElementById('btn-ia');
+        const container = document.getElementById('container-ia');
+        const texto = document.getElementById('texto-ia');
+        btn.innerText = "MAYÁ ANALISANDO..."; btn.disabled = true;
+        container.classList.remove('hidden');
+        texto.innerHTML = "<p class='animate-pulse'>Cruzando indicadores clínicos institucionais...</p>";
+        const amostra = allAssessments.slice(-15).map(a => `- ${a.perfilClinico?.doencasAtuais || 'N/A'}`).join("\n");
+        const prompt = `Atue como a Maya, IA da Vittalis. Analise os dados institucionais: Alunos: ${allUsers.length}, IMC Médio: ${document.getElementById('stat-imc-medio').innerText}. Casos clínicos:\n${amostra}\nGere relatório técnico Markdown (Diagnóstico, Riscos, 3 Sugestões). Seja técnica e direta.`;
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,{
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const res = await response.json();
+            texto.innerHTML = marked.parse(res.candidates[0].content.parts[0].text);
+        } catch (e) { texto.innerHTML = "Erro de conexão."; }
+        finally { btn.innerText = "Solicitar Auditoria"; btn.disabled = false; }
+    };
+
+    window.abrirModalReset = () => document.getElementById('modal-reset').classList.add('active');
+    window.fecharModalReset = () => document.getElementById('modal-reset').classList.remove('active');
+
+    window.confirmarLimpezaFinal = async () => {
+        const p1 = document.getElementById('reset-pass-1').value.trim();
+        const p2 = document.getElementById('reset-pass-2').value.trim();
+        const SENHA = "Vittalis_admin2026"; 
+        
+        if(p1 !== p2) return alert("Senhas não conferem.");
+        if(p1 !== SENHA) return alert("Senha administrativa incorreta.");
+        
+        const btn = event.target;
+        btn.innerText = "Limpando...";
+        btn.disabled = true;
+
+        await exportarPlanilhaCompleta();
+        
+        try {
+            const aSnap = await getDocs(collection(db, "assessments"));
+            if (aSnap.empty) {
+                alert("Nenhum dado para apagar.");
+                location.reload();
+                return;
+            }
+
+            // Exclusão sequencial robusta
+            for (const documentRef of aSnap.docs) {
+                await deleteDoc(doc(db, "assessments", documentRef.id));
+            }
+
+            alert("Ciclo renovado com sucesso! Todos os dados foram apagados."); 
+            location.reload();
+        } catch (e) { 
+            console.error("Erro Firebase:", e);
+            alert("Erro ao limpar dados do servidor. Verifique sua conexão."); 
+            btn.innerText = "Limpar Agora";
+            btn.disabled = false;
+        }
+    };
+
+    window.exportarPlanilhaCompleta = async () => {
+        try {
+            // CABEÇALHO ATUALIZADO: Saiu Perc_Gordura, entrou Glicemia e RCQ
+            let csvContent = "\ufeffNome;Tipo;CPF;Matricula;Data Nasc;Turma;Curso;Sexo;Telefone;QUADA_Motivacao;QUADA_Energetico;QUADA_Energetico_Freq;QUADA_Caneta;QUADA_Desjejum;QUADA_Refeicoes;QUADA_Intervalos;QUADA_Rotina;Hist_Diabetes;Hist_Hipertensao;Hist_Infarto;Hist_AVC;Hist_Obesidade;Hist_Cancer;Hist_Outros;Clin_Doencas;Clin_Medicamentos;Clin_Lesoes;Clin_Cirurgias;Sono_Qualidade;Tabaco;Tabaco_Freq;Alcool;Alcool_Freq;Tempo_Tela;Exercicios_Semana;Ativ_Natacao;Ativ_Academia;Ativ_Luta;Ativ_Outros;Dietas;Alergias_Complexo;Peso(kg);Altura(m);IMC;P_Sistolica;P_Diastolica;FC_BPM;Glicemia;RCQ;Circ_Abdominal\n";
+            
+            allUsers.forEach(user => {
+                const lastEval = [...allAssessments].reverse().find(a => a.userId === user.id);
+                const sn = (v) => v ? "Sim" : "Não";
+                const clean = (v) => v ? String(v).replace(/;/g, ",").replace(/[\r\n]+/g, " ") : "";
+                
+                const row = [
+                    user.nome || "", user.tipo || "Aluno", user.cpf || "", user.matricula || "N/A", user.dataNascimento || "", user.turma || "N/A", user.curso || "N/A", user.sexo || "", user.telefone || "",
+                    clean(lastEval?.quada?.motivacao), sn(lastEval?.quada?.tomaEnergetico), clean(lastEval?.quada?.energeticoDetalhe), sn(lastEval?.quada?.canetaEmagrecimento), clean(lastEval?.quada?.desjejum), clean(lastEval?.quada?.refeicoes), clean(lastEval?.quada?.intervalos), clean(lastEval?.quada?.rotina),
+                    sn(lastEval?.historicoFamiliar?.diabetes), sn(lastEval?.historicoFamiliar?.hipertensao), sn(lastEval?.historicoFamiliar?.infarto), sn(lastEval?.historicoFamiliar?.avc), sn(lastEval?.historicoFamiliar?.obesidade), sn(lastEval?.historicoFamiliar?.cancer), clean(lastEval?.historicoFamiliar?.outros),
+                    clean(lastEval?.perfilClinico?.doencasAtuais), clean(lastEval?.perfilClinico?.medicamentos), clean(lastEval?.perfilClinico?.lesoesAnteriores), clean(lastEval?.perfilClinico?.cirurgias),
+                    lastEval?.habitosVida?.qualidadeSono || "", sn(lastEval?.habitosVida?.usaTabaco), clean(lastEval?.habitosVida?.tabacoDetalhe), sn(lastEval?.habitosVida?.usaAlcool), clean(lastEval?.habitosVida?.alcoolDetalhe), clean(lastEval?.habitosVida?.tempoTela), lastEval?.habitosVida?.sessoesExercicios || "0",
+                    sn(lastEval?.habitosVida?.tiposAtividade?.natacao), sn(lastEval?.habitosVida?.tiposAtividade?.academia), sn(lastEval?.habitosVida?.tiposAtividade?.luta), clean(lastEval?.habitosVida?.outrosAtividade), clean(lastEval?.habitosVida?.dietasEspecificas), clean(lastEval?.habitosVida?.alergias),
+                    lastEval?.medicoes?.peso || "", lastEval?.medicoes?.altura || "", lastEval?.medicoes?.imc || "", lastEval?.medicoes?.pressaoSistolica || "", lastEval?.medicoes?.pressaoDiastolica || "", lastEval?.medicoes?.freqCardiaca || "", 
+                    lastEval?.medicoes?.glicemia || "", lastEval?.medicoes?.rcq || "", lastEval?.medicoes?.circAbdominal || ""
+                ].join(";");
+                csvContent += row + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "relatorio_institucional_vittalis.csv");
+            link.click();
+        } catch (e) { alert("Erro ao gerar planilha completa."); }
+    };
+    
+    window.exportarDadosAnonimos = async () => {
+        try {
+            // CABEÇALHO ATUALIZADO: Trocado Perc_Gordura por Glicemia e RCQ
+            let csvContent = "\ufeffIMC;Peso(kg);Altura(m);P_Sistolica;P_Diastolica;FC_BPM;Glicemia;RCQ;Circ_Abdominal;Data\n";
+            
+            allUsers.forEach(user => {
+                const ultima = [...allAssessments].reverse().find(av => av.userId === user.id);
+                if (ultima) {
+                    const m = ultima.medicoes;
+                    const dataAv = ultima.timestamp?.toDate ? ultima.timestamp.toDate().toLocaleDateString() : "";
+                    const row = [
+                        m?.imc || "0", m?.peso || "0", m?.altura || "0", 
+                        m?.pressaoSistolica || "0", m?.pressaoDiastolica || "0", m?.freqCardiaca || "0", 
+                        m?.glicemia || "0", m?.rcq || "0", m?.circAbdominal || "0", dataAv
+                    ].join(";");
+                    csvContent += row + "\n";
+                }
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "vittalis_dados_estatisticos.csv");
+            link.click();
+        } catch (e) { alert("Erro ao exportar dados."); }
+    };
+
+    window.logoutAdmin = () => signOut(auth).then(() => window.location.href = 'index.html');
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<style>
+    /* Barra de Rolagem */
+    .maya-scroll {
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        scrollbar-width: thin; 
+        scrollbar-color: #cbd5e1 transparent;
+    }
+    .maya-scroll::-webkit-scrollbar { width: 5px; }
+    .maya-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+    /* Pulso Sutil no Botão (6s) */
+    @keyframes ai-very-soft-glow {
+        0% { box-shadow: 0 0 0 0 rgba(0, 66, 83, 0.1); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 66, 83, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 66, 83, 0); }
+    }
+    .maya-pulse-minimal { animation: ai-very-soft-glow 6s infinite; }
+
+    #maya-toggle-btn {
+        border-radius: 9999px !important;
+        padding: 0;
+        overflow: hidden;
+        background: white;
+        border: 2px solid #004253;
+        cursor: pointer;
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #maya-toggle-btn img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>
+
+<div id="maya-chat-widget" class="fixed bottom-6 right-6 z-50 font-inter">
+    
+    <!-- Botão com imagem chat.jpg -->
+    <button id="maya-toggle-btn" class="shadow-2xl hover:scale-105 active:scale-95 transition-all maya-pulse-minimal">
+        <img src="img/chat.jpg" alt="Maya Chat">
+    </button>
+
+    <!-- Caixa de Chat -->
+    <div id="maya-chat-box" class="hidden flex absolute bottom-20 right-0 w-[370px] h-[550px] max-h-[85vh] bg-white rounded-2xl shadow-2xl flex-col border border-slate-200 overflow-hidden transform origin-bottom-right transition-all">
+        
+        <div class="bg-[#004253] text-white p-4 flex justify-between items-center shadow-md z-10 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-slate-100 flex items-center justify-center">
+                    <img src="img/maya.png" alt="Maya" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col">
+                    <h3 class="font-bold text-base leading-tight">Maya</h3>
+                    <p class="text-[10px] opacity-90 font-medium tracking-tight">Assistente Virtual do Portal Vittalis</p>
+                </div>
+            </div>
+            <button id="maya-close-btn" class="hover:bg-white/10 p-1 rounded-full transition-colors">
+                <span class="material-symbols-outlined text-xl text-white">close</span>
+            </button>
+        </div>
+
+        <div id="maya-chat-messages" class="flex-1 min-h-0 p-5 space-y-4 bg-slate-50/50 maya-scroll overflow-y-auto">
+            <!-- Mensagens carregadas do Firebase aparecerão aqui -->
+        </div>
+
+        <div class="p-4 bg-white border-t border-slate-100 flex-shrink-0">
+            <form id="maya-chat-form" class="flex items-center gap-2 relative">
+                <input type="text" id="maya-user-input" autocomplete="off" placeholder="Escreva sua dúvida..." class="w-full h-12 pl-4 pr-12 bg-slate-100 border-none focus:ring-2 focus:ring-[#004253]/20 rounded-xl transition-all text-sm text-slate-700">
+                <button type="submit" class="absolute right-1.5 w-9 h-9 bg-[#004253] text-white rounded-lg flex items-center justify-center hover:bg-[#005b71] transition-all">
+                    <span class="material-symbols-outlined text-xl text-white">send</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script type="module">
+    import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    const db = getFirestore();
+    const auth = getAuth();
+    
+    // MODELO GEMINI 2.5 FLASH CONFORME SOLICITADO
+    const GEMINI_API_KEY = "AIzaSyBURpH7gbmrbOPL54XxnEq_V7bQ6aczkNQ";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const messagesContainer = document.getElementById('maya-chat-messages');
+    const chatForm = document.getElementById('maya-chat-form');
+    const userInput = document.getElementById('maya-user-input');
+    let userLogged = null;
+
+    // --- CARREGAR HISTÓRICO DO FIREBASE ---
+    async function loadHistory(uid) {
+        messagesContainer.innerHTML = '';
+        const q = query(collection(db, "users", uid, "chats"), orderBy("timestamp", "asc"));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            // Se for a primeira vez (histórico vazio), mostra saudação e sugestões
+            appendMessageUI("Olá! Eu sou a **Maya**. 👋 Como posso ajudar você hoje?", false);
+            showSuggestions();
+        } else {
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                appendMessageUI(data.text, data.role === "user");
+            });
+        }
+    }
+
+    // --- SALVAR NO FIREBASE ---
+    async function saveMessage(role, text) {
+        if (!userLogged) return;
+        try {
+            await addDoc(collection(db, "users", userLogged.uid, "chats"), {
+                role: role,
+                text: text,
+                timestamp: serverTimestamp()
+            });
+        } catch (e) { console.error("Erro ao salvar no Firebase:", e); }
+    }
+
+    function appendMessageUI(text, isUser = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `flex items-start gap-3 ${isUser ? 'justify-end' : ''}`;
+        const avatar = isUser ? '' : `<div class="w-8 h-8 rounded-full bg-[#004253] text-white flex items-center justify-center flex-shrink-0 shadow-sm"><span class="material-symbols-outlined text-lg text-white">smart_toy</span></div>`;
+        const bubbleClass = isUser ? 'bg-[#004253] text-white rounded-tr-none' : 'bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm';
+        msgDiv.innerHTML = `${!isUser ? avatar : ''}<div class="text-sm p-4 rounded-2xl max-w-[85%] leading-relaxed ${bubbleClass}">${isUser ? text : marked.parse(text)}</div>`;
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function showSuggestions() {
+        const sugDiv = document.createElement('div');
+        sugDiv.id = 'maya-suggestions-container';
+        sugDiv.className = 'flex flex-col gap-2 mt-4';
+        sugDiv.innerHTML = `
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-1">Sugestões Iniciais:</p>
+            <button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253] transition-all">O que é o Vittalis?</button>
+            <button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253] transition-all">Como faço uma avaliação de saúde?</button>
+            <button class="maya-sug-btn text-left text-xs bg-white border border-slate-200 p-3 rounded-xl hover:border-[#004253] transition-all">O que os gráficos do dashboard mostram?</button>
+        `;
+        messagesContainer.appendChild(sugDiv);
+        sugDiv.querySelectorAll('.maya-sug-btn').forEach(btn => {
+            btn.onclick = () => { 
+                sugDiv.remove(); 
+                handleSend(btn.innerText); 
+            };
+        });
+    }
+
+    const handleSend = async (text) => {
+        if (!text) return;
+        const sug = document.getElementById('maya-suggestions-container');
+        if(sug) sug.remove();
+
+        appendMessageUI(text, true);
+        await saveMessage("user", text);
+
+        // --- ANIMAÇÃO DE DIGITAÇÃO ---
+        const loadingId = 'loading-' + Date.now();
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = loadingId;
+        loadingDiv.className = 'flex items-start gap-3';
+        loadingDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                <span class="material-symbols-outlined animate-spin text-lg text-slate-400">sync</span>
+            </div>
+            <div class="text-xs p-3 rounded-2xl italic text-slate-400 bg-white border border-slate-100 shadow-sm">
+                Maya está escrevendo...
+            </div>
+        `;
+        messagesContainer.appendChild(loadingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Você é a Maya, assistente inteligente do Portal Vittalis. Responda: " + text }] }] })
+            });
+            const data = await response.json();
+            const aiText = data.candidates[0].content.parts[0].text;
+            
+            document.getElementById(loadingId).remove();
+            appendMessageUI(aiText, false);
+            await saveMessage("model", aiText);
+        } catch (e) {
+            if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+            appendMessageUI("Erro ao conectar com a Maya (Gemini 2.5). Verifique sua chave API.", false);
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) { userLogged = user; loadHistory(user.uid); }
+    });
+
+    chatForm.onsubmit = (e) => {
+        e.preventDefault();
+        const text = userInput.value.trim();
+        userInput.value = '';
+        handleSend(text);
+    };
+
+    document.getElementById('maya-toggle-btn').onclick = () => document.getElementById('maya-chat-box').classList.toggle('hidden');
+    document.getElementById('maya-close-btn').onclick = () => document.getElementById('maya-chat-box').classList.add('hidden');
+</script>

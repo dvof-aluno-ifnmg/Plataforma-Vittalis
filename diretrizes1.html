@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Diretrizes de Privacidade</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#004253",
+                "surface": "#f8f9fa",
+                "on-surface": "#191c1d",
+                "on-surface-variant": "#40484c",
+                "outline-variant": "#bfc8cc",
+              },
+              fontFamily: { "body": ["Inter"] }
+            }
+          }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+
+    <main class="pt-20 pb-24 max-w-7xl mx-auto px-8">
+        
+        <!-- CABEÇALHO DE AÇÕES -->
+        <div class="flex justify-between items-center mb-12 no-print">
+            <!-- BOTÃO VOLTAR LINKADO PARA CONFIG.HTML -->
+            <a href="config.html" class="flex items-center gap-2 text-primary hover:opacity-70 transition-all cursor-pointer">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="uppercase text-xs font-bold tracking-widest">Voltar para o Sistema</span>
+            </a>
+
+            <button onclick="window.print()" class="bg-primary text-white px-8 py-3 flex items-center gap-3 hover:bg-opacity-90 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-sm">download</span>
+                <span class="uppercase text-xs font-bold tracking-widest">Baixar Diretrizes (PDF)</span>
+            </button>
+        </div>
+
+        <!-- TÍTULO PRINCIPAL -->
+        <header class="mb-16">
+            <h1 class="text-5xl font-black tracking-tighter text-primary mb-4 leading-none">Diretrizes de Proteção de <br>Dados e Privacidade</h1>
+            <p class="text-xl text-on-surface-variant font-light max-w-3xl">Em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
+        </header>
+
+        <!-- GRID DE CONTEÚDO -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <!-- Introdução -->
+            <div class="md:col-span-12 bg-white p-10 border border-outline-variant/30 relative">
+                <div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+                <h3 class="text-xl font-bold text-primary mb-4 uppercase tracking-tight">Propósito Vittalis</h3>
+                <p class="text-on-surface-variant leading-relaxed font-medium">
+                    O Vittalis lida com dados pessoais sensíveis — como informações relacionadas à saúde física, hábitos de vida e medições corporais. Por isso, adotamos uma abordagem baseada na responsabilidade e transparência, assegurando que o tratamento de dados seja alinhado às exigências legais.
+                </p>
+            </div>
+
+            <!-- Necessidade -->
+            <div class="md:col-span-5 bg-white p-8 border border-outline-variant/30 group hover:border-primary transition-all">
+                <span class="material-symbols-outlined text-primary text-3xl mb-4">inventory_2</span>
+                <h3 class="text-lg font-bold text-on-surface mb-2">Princípio da Necessidade</h3>
+                <p class="text-xs text-on-surface-variant leading-relaxed">Solicitamos apenas as informações estritamente essenciais ao usuário, evitando excessos. Dados como peso, altura e histórico de saúde possuem a finalidade específica de gerar seu dashboard informativo.</p>
+            </div>
+
+            <!-- Consentimento -->
+            <div class="md:col-span-7 bg-white p-8 border border-outline-variant/30 group hover:border-primary transition-all">
+                <span class="material-symbols-outlined text-primary text-3xl mb-4">verified_user</span>
+                <h3 class="text-lg font-bold text-on-surface mb-2">Transparência e Consentimento</h3>
+                <p class="text-xs text-on-surface-variant leading-relaxed">O consentimento é obtido de maneira livre e informada. Você tem total ciência de quais dados serão utilizados e pode revogar esse consentimento ou solicitar a exclusão de seus dados a qualquer momento.</p>
+            </div>
+
+            <!-- Dados Sensíveis -->
+            <div class="md:col-span-8 bg-white p-8 border border-outline-variant/30 group hover:border-primary transition-all">
+                <span class="material-symbols-outlined text-primary text-3xl mb-4">lock_person</span>
+                <h3 class="text-xl font-bold text-on-surface mb-2">Tratamento de Dados Sensíveis</h3>
+                <p class="text-sm text-on-surface-variant leading-relaxed mb-4">Informações de saúde exigem proteção elevada. Adotamos medidas rigorosas para garantir a confidencialidade, restringindo o acesso apenas a sistemas autorizados.</p>
+                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-primary">Acesso Restrito e Protegido</span>
+            </div>
+
+            <!-- Segurança -->
+            <div class="md:col-span-4 bg-white p-8 border border-outline-variant/30 group hover:border-primary transition-all">
+                <span class="material-symbols-outlined text-primary text-3xl mb-4">security</span>
+                <h3 class="text-lg font-bold text-on-surface mb-2">Segurança da Informação</h3>
+                <p class="text-xs text-on-surface-variant">Utilizamos criptografia, autenticação segura e monitoramento contínuo para prevenir incidentes e proteger seus dados contra acessos não autorizados.</p>
+            </div>
+
+            <!-- Direitos -->
+            <div class="md:col-span-12 bg-white p-10 border border-outline-variant/30 group hover:border-primary transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="material-symbols-outlined text-primary text-3xl mb-4">settings_accessibility</span>
+                        <h3 class="text-xl font-bold text-on-surface mb-2">Autonomia e Direitos do Usuário</h3>
+                        <p class="text-sm text-on-surface-variant max-w-2xl">Você possui o direito de acesso, correção de informações e revogação de consentimento. Garantimos que seus dados sejam exibidos exclusivamente para você, respeitando sua total privacidade.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compartilhamento -->
+            <div class="md:col-span-6 bg-white p-8 border border-outline-variant/30 group hover:border-primary transition-all">
+                <h3 class="text-lg font-bold text-on-surface mb-2 uppercase tracking-tighter">Compartilhamento</h3>
+                <p class="text-xs text-on-surface-variant">O Vittalis não realiza o compartilhamento de dados com terceiros sem autorização expressa, exceto para cumprimento de obrigações legais ou judiciais.</p>
+            </div>
+
+            <!-- Armazenamento -->
+            <div class="md:col-span-6 bg-white p-8 border border-outline-variant/30 group hover:border-primary transition-all">
+                <h3 class="text-lg font-bold text-on-surface mb-2 uppercase tracking-tighter">Armazenamento</h3>
+                <p class="text-xs text-on-surface-variant">Os dados permanecem no sistema apenas pelo tempo necessário. O usuário pode, a qualquer momento, solicitar a exclusão definitiva de suas informações.</p>
+            </div>
+        </div>
+
+        <!-- NOTA DE RODAPÉ -->
+        <footer class="mt-16 pt-8 border-t border-slate-200 text-center">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Vittalis • Compromisso com a Ética Digital • 2026</p>
+        </footer>
+
+    </main>
+<!-- INÍCIO BLOCO VLIBRAS -->
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
+<style>
+    /* Move o botão para a esquerda para não tampar a Maya na direita */
+    .vw-access-button {
+        left: 20px !important;
+        right: auto !important;
+    }
+</style>
+<!-- FIM BLOCO VLIBRAS -->
+</body>
+</html>

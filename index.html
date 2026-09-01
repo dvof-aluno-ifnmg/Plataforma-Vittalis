@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Monitoramento Inteligente de Saúde Escolar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Biblioteca para Gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#004253",
+                "primary-container": "#005b71",
+                "surface": "#f8f9fa",
+                "on-surface": "#191c1d",
+                "on-surface-variant": "#40484c",
+                "surface-container-low": "#f3f4f5",
+                "surface-container-lowest": "#ffffff",
+              },
+              fontFamily: {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+              },
+            },
+          },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { 
+            vertical-align: middle; 
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Navbar dinâmica */
+        nav.scrolled {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        nav.scrolled .nav-link { color: #40484c; }
+        nav.scrolled .nav-logo { color: #004253; }
+        nav.scrolled .btn-offline { 
+            border-color: #004253; 
+            color: #004253; 
+        }
+        nav.scrolled .active-link { 
+            color: #004253 !important; 
+            border-color: #004253 !important; 
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Estilos da Calculadora (Modal) */
+        #modal-calc {
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+        #modal-calc.active {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<!-- Navbar Sincronizada -->
+<nav id="mainNav" class="fixed top-0 left-0 w-full z-50 transition-all duration-500 py-6 px-8">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="nav-logo text-2xl font-black tracking-tighter text-white transition-colors duration-300 cursor-pointer" onclick="window.scrollTo(0,0)">Vittalis</div>
+        
+        <div class="hidden lg:flex gap-8 items-center">
+            <a href="#secao-pilares" class="nav-link text-white font-bold text-xs hover:opacity-70 transition-all uppercase tracking-widest">Pilares</a>
+            <a href="#secao-projeto" class="nav-link text-white font-bold text-xs hover:opacity-70 transition-all uppercase tracking-widest">Projeto</a>
+            <a href="#secao-contato" class="nav-link text-white font-bold text-xs hover:opacity-70 transition-all uppercase tracking-widest">Contato</a>
+        </div>
+
+        <div class="flex gap-4 items-center">
+            <button onclick="toggleModal(true)" class="btn-offline px-6 py-2 border border-white/30 text-white font-bold text-xs uppercase tracking-widest rounded-md hover:bg-white/10 transition-all">Calculadora Offline</button>
+            <a href="login.html" class="px-6 py-2 bg-white text-primary font-bold text-xs uppercase tracking-widest rounded-md hover:scale-105 transition-all shadow-md">Login</a>
+        </div>
+    </div>
+</nav>
+
+<!-- MODAL CALCULADORA OFFLINE -->
+<div id="modal-calc" class="fixed inset-0 z-[100] items-center justify-center bg-black/60 p-4">
+    <div class="bg-white w-full max-w-[550px] rounded-lg shadow-2xl overflow-hidden flex flex-col relative animate-slideFadeUp">
+        <!-- Header do Modal -->
+        <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white">
+            <div>
+                <h2 class="text-xl font-bold text-[#004253]">Calculadora Offline</h2>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Análise Rápida de Saúde</p>
+            </div>
+            <button onclick="toggleModal(false)" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <span class="material-symbols-outlined text-gray-400">close</span>
+            </button>
+        </div>
+
+        <!-- Conteúdo do Modal -->
+        <div class="p-8 space-y-6 overflow-y-auto max-h-[70vh]">
+            <!-- Dados Identificação -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase text-gray-600">Nome do Aluno</label>
+                    <input id="calc_nome" class="w-full p-3 bg-gray-50 border-none rounded text-sm" placeholder="Nome Completo" type="text"/>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-gray-600">Idade</label>
+                        <input id="calc_idade" class="w-full p-3 bg-gray-50 border-none rounded text-sm" placeholder="Ex: 15" type="number"/>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black uppercase text-gray-600">Sexo</label>
+                        <select id="calc_sexo" class="w-full p-3 bg-gray-50 border-none rounded text-sm">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Feminino">Feminino</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Peso (kg)</label>
+                    <input id="calc_peso" inputmode="decimal" class="w-full p-4 bg-gray-50/80 border-none rounded focus:ring-1 focus:ring-gray-300 text-lg font-semibold text-[#004253]" placeholder="0.0" type="text"/>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Altura (m)</label>
+                    <input id="calc_altura" inputmode="decimal" class="w-full p-4 bg-gray-50/80 border-none rounded focus:ring-1 focus:ring-gray-300 text-lg font-semibold text-[#004253]" placeholder="0.00" type="text"/>
+                </div>
+            </div>
+
+            <!-- Display de IMC -->
+            <div class="w-full h-24 bg-[#004253] rounded-lg flex flex-col items-center justify-center text-white shadow-lg">
+                <span class="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">Seu IMC Estimado</span>
+                <span id="calc_display_imc" class="text-4xl font-black">--</span>
+                <span id="calc_status" class="text-[10px] font-bold uppercase tracking-widest mt-1 text-white/70">Aguardando dados</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Pressão (mmHg)</label>
+                    <div class="flex items-center gap-2">
+                        <input id="calc_sis" class="w-full p-3 bg-gray-50/80 border-none rounded text-sm font-bold" placeholder="SIS" type="number"/>
+                        <span class="text-gray-300">/</span>
+                        <input id="calc_dia" class="w-full p-3 bg-gray-50/80 border-none rounded text-sm font-bold" placeholder="DIA" type="number"/>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Freq. Cardíaca (BPM)</label>
+                    <input id="calc_bpm" class="w-full p-3 bg-gray-50/80 border-none rounded text-sm font-bold" placeholder="72" type="number"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer do Modal -->
+        <div class="px-8 py-6 bg-gray-50 border-t border-gray-100 flex flex-col gap-3">
+            <button id="btn_gerar_pdf" onclick="gerarRelatorioPDF()" class="w-full py-4 bg-[#004253] text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-[#003643] transition-all flex items-center justify-center gap-2 shadow-lg">
+                <span class="material-symbols-outlined text-sm">description</span>
+                Gerar Análise Completa
+            </button>
+            <p class="text-[9px] text-gray-400 font-medium leading-tight text-center uppercase tracking-tighter">
+                Estes dados são processados localmente e não são salvos em nosso banco de dados.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATE DO PDF (AJUSTADO PARA PAISAGEM) -->
+<div id="pdf_container" style="position: absolute; left: -9999px; top: -9999px;">
+    <div id="pdf_template" class="p-12 bg-white" style="width: 1080px; font-family: 'Inter', sans-serif;">
+        <div class="flex justify-between items-start border-b-2 border-[#004253] pb-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-[#004253] tracking-tighter">VITTALIS</h1>
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Relatório de Saúde Institucional</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Data da Análise</p>
+                <p id="pdf_data" class="text-sm font-bold text-[#004253]"></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 mb-10">
+            <div class="space-y-2">
+                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Identificação</h3>
+                <p class="text-sm"><b>Nome:</b> <span id="pdf_nome"></span></p>
+                <p class="text-sm"><b>Idade:</b> <span id="pdf_idade"></span> anos</p>
+                <p class="text-sm"><b>Sexo:</b> <span id="pdf_sexo"></span></p>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Medidas</h3>
+                <p class="text-sm"><b>Peso:</b> <span id="pdf_peso"></span> kg</p>
+                <p class="text-sm"><b>Altura:</b> <span id="pdf_altura"></span> m</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-8 rounded-xl border border-gray-100 mb-10 text-center">
+            <h3 class="text-xs font-black text-[#004253] uppercase tracking-widest mb-4">Índice de Massa Corporal (IMC)</h3>
+            <div class="text-6xl font-black text-[#004253] mb-2" id="pdf_imc_valor">--</div>
+            <div class="text-lg font-bold text-[#004253] mb-6" id="pdf_imc_status">Status</div>
+            
+            <!-- Barra de Normalidade -->
+            <div class="w-full max-w-2xl mx-auto h-4 bg-gray-200 rounded-full flex overflow-hidden">
+                <div class="h-full bg-blue-400" style="width: 18.5%;"></div>
+                <div class="h-full bg-green-500" style="width: 6.5%;"></div>
+                <div class="h-full bg-yellow-400" style="width: 5%;"></div>
+                <div class="h-full bg-orange-500" style="width: 10%;"></div>
+                <div class="h-full bg-red-600" style="width: 60%;"></div>
+            </div>
+            <div class="flex justify-between max-w-2xl mx-auto text-[8px] font-bold text-gray-400 uppercase mt-2">
+                <span>Magreza</span>
+                <span>Normal</span>
+                <span>Sobrepeso</span>
+                <span>Obesidade</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 mb-10">
+            <div class="p-6 bg-white border border-gray-100 rounded-xl">
+                <h3 class="text-[10px] font-black text-[#004253] uppercase tracking-widest mb-4">Sinais Vitais</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b pb-2 border-gray-50">
+                        <span class="text-xs text-gray-500 font-medium">Pressão Arterial</span>
+                        <span class="text-sm font-bold text-[#004253]" id="pdf_pressao">--</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b pb-2 border-gray-50">
+                        <span class="text-xs text-gray-500 font-medium">Freq. Cardíaca</span>
+                        <span class="text-sm font-bold text-[#004253]" id="pdf_bpm">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 bg-[#004253] rounded-xl text-white">
+                <h3 class="text-[10px] font-black uppercase tracking-widest mb-4 opacity-70">Avaliação do Sistema</h3>
+                <p id="pdf_conclusao" class="text-xs leading-relaxed font-medium">
+                    Aguardando processamento...
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-gray-100 text-center">
+            <p class="text-[9px] text-gray-400 leading-relaxed max-w-xl mx-auto uppercase font-bold">
+                Atenção: Este documento é uma estimativa gerada por software. Não substitui a avaliação presencial de um profissional de saúde qualificado.
+            </p>
+        </div>
+    </div>
+</div>
+
+<main>
+    <!-- Hero Section -->
+    <section class="relative h-[870px] min-h-[600px] flex items-center overflow-hidden bg-primary">
+        <div class="absolute inset-0 z-0">
+            <img class="w-full h-full object-cover opacity-40 mix-blend-overlay" src="img/index.jpg" alt="Ambiente Escolar"/>
+            <div class="absolute inset-0 bg-gradient-to-tr from-primary via-primary/80 to-transparent"></div>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-8 w-full">
+            <div class="max-w-2xl">
+                <h1 class="text-5xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight mb-6">
+                    Monitoramento Inteligente de Saúde Escolar
+                </h1>
+                <p class="text-xl text-white/90 font-light mb-10 leading-relaxed">
+                    Uma sentinela clínica para sua instituição. Combinamos precisão autoritária com uma abordagem acolhedora para garantir o bem-estar contínuo de cada aluno.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="login.html" class="bg-[#005B71] text-white px-10 py-4 rounded-lg font-semibold text-lg hover:brightness-110 transition-all shadow-xl shadow-primary/20">
+                        Começar Agora
+                    </a>
+                    <a href="#secao-pilares" class="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-all">
+                        Saiba Mais
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pilares Section -->
+    <section id="secao-pilares" class="py-32 bg-surface">
+        <div class="max-w-7xl mx-auto px-8">
+            <div class="mb-20">
+                <span class="text-primary-container font-semibold tracking-widest uppercase text-xs">Excelência Clínica</span>
+                <h2 class="text-4xl font-bold text-on-surface mt-2">Nossos Pilares de Cuidado</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <!-- Acompanhamento Físico -->
+                <div class="group p-8 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="w-14 h-14 bg-primary-container/10 rounded-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-[#005B71] text-3xl">monitoring</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-on-surface mb-4">Acompanhamento Físico</h3>
+                    <p class="text-on-surface-variant leading-relaxed">
+                        Registro detalhado de biométricas, crescimento e marcos de desenvolvimento com alertas automáticos para desvios clínicos.
+                    </p>
+                    <div class="mt-8 h-1 w-12 bg-primary/20 group-hover:w-full transition-all duration-500"></div>
+                </div>
+                <!-- Privacidade de Dados -->
+                <div class="group p-8 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="w-14 h-14 bg-primary-container/10 rounded-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-[#005B71] text-3xl">verified_user</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-on-surface mb-4">Privacidade de Dados</h3>
+                    <p class="text-on-surface-variant leading-relaxed">
+                        Dados criptografados e conformidade total com as normas de proteção à privacidade estudantil.
+                    </p>
+                    <div class="mt-8 h-1 w-12 bg-primary/20 group-hover:w-full transition-all duration-500"></div>
+                </div>
+                <!-- Relatórios Médicos -->
+                <div class="group p-8 bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <div class="w-14 h-14 bg-primary-container/10 rounded-xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-[#005B71] text-3xl">clinical_notes</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-on-surface mb-4">Relatórios Médicos</h3>
+                    <p class="text-on-surface-variant leading-relaxed">
+                        Visualizações analíticas para gestores e relatórios detalhados para famílias. Transformando dados brutos em decisões de saúde.
+                    </p>
+                    <div class="mt-8 h-1 w-12 bg-primary/20 group-hover:w-full transition-all duration-500"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projeto Section -->
+    <section id="secao-projeto" class="grid grid-cols-1 md:grid-cols-2 bg-surface-container-low min-h-[600px]">
+        <div class="p-16 flex flex-col justify-center">
+            <div class="max-w-md">
+                <h2 class="text-3xl font-bold text-primary mb-6">Projetado por Especialistas em Saúde Escolar</h2>
+                <p class="text-on-surface-variant mb-8 text-lg">
+                    Nossa interface evita o ruído visual das planilhas tradicionais. Priorizamos a clareza editorial para que a equipe de enfermagem foque no que importa: o aluno.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        <span class="text-on-surface font-medium">Análise Inteligente de Medidas</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        <span class="text-on-surface font-medium">Ferramentas Comparativas</span>
+                    </li>
+                    <li class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        <span class="text-on-surface font-medium">Banco de Informações</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="relative">
+            <img class="w-full h-full object-cover" src="img/especialista.jpg" alt="Interface Vittalis"/>
+            <div class="absolute inset-0 bg-primary/10"></div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 bg-surface">
+        <div class="max-w-5xl mx-auto px-8 text-center bg-primary-container rounded-xl p-16 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+            <div class="relative z-10">
+                <h2 class="text-4xl font-bold text-white mb-6">Pronto Para Cuidar da Sua Saúde</h2>
+                <p class="text-white/80 mb-10 text-xl max-w-2xl mx-auto">
+                    Junte-se a nós e use o Vittalis para transformar o monitoramento reativo em cuidado proativo.
+                </p>
+                <a href="login.html" class="bg-white text-primary px-12 py-4 rounded-lg font-bold text-lg hover:bg-slate-100 transition-all scale-100 hover:scale-105 active:scale-95 duration-150 inline-block">
+                    Começar Agora
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer (Seção Contato) -->
+<footer id="secao-contato" class="bg-primary text-white py-20">
+    <div class="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-4 gap-12 text-sm">
+        <div>
+            <div class="text-3xl font-black mb-6">Vittalis</div>
+            <p class="opacity-70 leading-loose">Excelência técnica em monitoramento de saúde escolar.</p>
+        </div>
+        <div>
+            <h4 class="font-black uppercase tracking-widest mb-6">Contate-nos</h4>
+            <ul class="space-y-4 opacity-70">
+                <li><a href="mailto:kfs16@aluno.ifnmg.edu.br" class="hover:opacity-100 transition-all">kfs16@aluno.ifnmg.edu.br</a></li>
+        
+                <li><a href="diretrizes2.html" target="_blank" class="hover:opacity-100 transition-all">Diretrizes</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-black uppercase tracking-widest mb-6">Governo</h4>
+            <ul class="space-y-4 opacity-70">
+                <li><a href="https://www.gov.br" target="_blank" class="hover:opacity-100 transition-all">Gov.br</a></li>
+                <li><a href="https://www.gov.br/saude" target="_blank" class="hover:opacity-100 transition-all">Ministério da Saúde</a></li>
+                <li><a href="https://www.who.int/" target="_blank" class="hover:opacity-100 transition-all">WHO</a></li>
+            </ul>
+        </div>
+        <div class="flex flex-col justify-end">
+            <div class="p-6 border border-white/20 rounded-2xl opacity-60">
+                © 2026 Vittalis Portal de Saúde Escolar. 
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Efeito da Navbar ao rolar
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('mainNav');
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+    });
+
+    // Funções da Calculadora Offline
+    const modal = document.getElementById('modal-calc');
+    
+    function toggleModal(open) {
+        if(open) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        } else {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Máscaras e Lógica de Cálculo
+    function applyMask(input, decimals) {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value === "") { e.target.value = ""; calcularIMC(); return; }
+            let formattedValue = (parseInt(value) / Math.pow(10, decimals)).toFixed(decimals);
+            e.target.value = formattedValue;
+            calcularIMC();
+        });
+    }
+
+    function calcularIMC() {
+        const peso = parseFloat(document.getElementById('calc_peso').value);
+        const altura = parseFloat(document.getElementById('calc_altura').value);
+        const display = document.getElementById('calc_display_imc');
+        const status = document.getElementById('calc_status');
+        
+        if(peso > 0 && altura > 0) {
+            const imc = (peso / (altura * altura)).toFixed(1);
+            display.innerText = imc;
+            
+            if(imc < 18.5) status.innerText = "Baixo Peso";
+            else if(imc < 25) status.innerText = "Peso Normal";
+            else if(imc < 30) status.innerText = "Sobrepeso";
+            else status.innerText = "Obesidade";
+        } else { 
+            display.innerText = "--"; 
+            status.innerText = "Aguardando dados";
+        }
+    }
+
+    // FUNÇÃO PARA GERAR O PDF BONITINHO EM PAISAGEM
+    function gerarRelatorioPDF() {
+        const nome = document.getElementById('calc_nome').value || "Aluno Não Identificado";
+        const idade = document.getElementById('calc_idade').value || "--";
+        const sexo = document.getElementById('calc_sexo').value;
+        const peso = document.getElementById('calc_peso').value;
+        const altura = document.getElementById('calc_altura').value;
+        const imc = document.getElementById('calc_display_imc').innerText;
+        const statusIMC = document.getElementById('calc_status').innerText;
+        const sis = document.getElementById('calc_sis').value;
+        const dia = document.getElementById('calc_dia').value;
+        const bpm = document.getElementById('calc_bpm').value;
+
+        if(!peso || !altura || imc === "--") {
+            alert("Por favor, preencha Peso e Altura antes de gerar a análise.");
+            return;
+        }
+
+        // Preencher Template do PDF
+        document.getElementById('pdf_nome').innerText = nome;
+        document.getElementById('pdf_idade').innerText = idade;
+        document.getElementById('pdf_sexo').innerText = sexo;
+        document.getElementById('pdf_peso').innerText = peso;
+        document.getElementById('pdf_altura').innerText = altura;
+        document.getElementById('pdf_imc_valor').innerText = imc;
+        document.getElementById('pdf_imc_status').innerText = statusIMC;
+        document.getElementById('pdf_data').innerText = new Date().toLocaleDateString('pt-BR');
+        document.getElementById('pdf_pressao').innerText = (sis && dia) ? `${sis}/${dia} mmHg` : "Não informado";
+        document.getElementById('pdf_bpm').innerText = bpm ? `${bpm} BPM` : "Não informado";
+
+        // Gerar Conclusão Clínica Dinâmica
+        let conclusao = `Baseado nos dados, seu IMC indica ${statusIMC.toLowerCase()}. `;
+        
+        if(sis >= 140 || dia >= 90) {
+            conclusao += "Sua pressão arterial está acima do recomendado. ";
+        } else if (sis > 0) {
+            conclusao += "Sua pressão arterial parece normal. ";
+        }
+
+        if(bpm > 100) {
+            conclusao += "Sua frequência cardíaca está elevada em repouso. ";
+        }
+
+        conclusao += "Recomendamos manter uma dieta equilibrada e praticar atividades físicas regularmente.";
+        document.getElementById('pdf_conclusao').innerText = conclusao;
+
+        // Gerar PDF em PAISAGEM (LANDSCAPE)
+        const element = document.getElementById('pdf_template');
+        const opt = {
+            margin: 10,
+            filename: `Analise_Saude_Vittalis_${nome.replace(/\s/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            toggleModal(false); // Fecha o modal após gerar
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        applyMask(document.getElementById('calc_peso'), 1);   
+        applyMask(document.getElementById('calc_altura'), 2); 
+    });
+</script>
+
+<!-- INTEGRAÇÃO FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+    authDomain: "site-tcc-abaa1.firebaseapp.com",
+    projectId: "site-tcc-abaa1",
+    storageBucket: "site-tcc-abaa1.firebasestorage.app",
+    messagingSenderId: "819270190928",
+    appId: "1:819270190928:web:523152052cdfb4247e4e55",
+    measurementId: "G-YLJ4TP0BFC"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  
+  console.log("Vittalis: Firebase Conectado com sucesso!");
+</script>
+<!-- INÍCIO BLOCO VLIBRAS -->
+<div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+    </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
+<style>
+    /* Move o botão para a esquerda para não tampar a Maya na direita */
+    .vw-access-button {
+        left: 20px !important;
+        right: auto !important;
+    }
+</style>
+<!-- FIM BLOCO VLIBRAS -->
+</body>
+</html>

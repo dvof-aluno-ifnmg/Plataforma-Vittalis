@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html class="light h-full" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vittalis | Lançamento Profissional</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #004253; border-radius: 10px; }
+
+        /* ANIMAÇÕES IGUAIS AO SEU ORIGINAL */
+        .step-panel { display: none; }
+        .step-panel.active { display: block; animation: slideFadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes slideFadeUp { 0% { opacity: 0; transform: translateY(15px) scale(0.99); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .dot { animation: bounce 1s infinite alternate; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-15px); } }
+        
+        .input-error { border: 2px solid #ef4444 !important; background-color: #fef2f2 !important; }
+        
+        /* MODAL OVERLAY CENTRALIZADO */
+        .modal-overlay { 
+            background-color: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(8px);
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            align-items: center; 
+            justify-content: center;
+            padding: 24px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        /* Esconder setas de input number */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: { "surface": "#F8F9FA", "primary": "#004253", "on-primary": "#ffffff" },
+              borderRadius: { "DEFAULT": "4px", "lg": "6px" },
+            },
+          },
+        }
+    </script>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex">
+
+    <!-- SIDEBAR -->
+   <aside class="w-64 bg-white border-r border-slate-200 flex flex-col sticky top-0 h-screen shrink-0 z-50">
+    <div class="p-8">
+        <span class="text-2xl font-black text-[#004253] tracking-tighter">Vittalis</span>
+    </div>
+    <nav class="flex-grow px-4 space-y-2">
+        <a class="flex items-center gap-3 px-4 py-3 rounded text-slate-400 hover:bg-slate-50 hover:text-[#004253] font-bold transition-all" href="admin.html">
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="text-xs uppercase tracking-widest">Análise IA</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 rounded bg-slate-50 text-[#004253] font-bold" href="lancamento_admin.html">
+            <span class="material-symbols-outlined">edit_document</span>
+            <span class="text-xs uppercase tracking-widest">Lançamentos</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 rounded text-slate-400 hover:bg-slate-50 hover:text-[#004253] font-bold transition-all" href="cadastro_admin.html">
+            <span class="material-symbols-outlined">person_add</span>
+            <span class="text-xs uppercase tracking-widest">Cadastros</span>
+        </a>
+    </nav>
+    <div class="p-6 border-t border-slate-100">
+        <button onclick="logoutAdmin()" class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase hover:text-red-500">
+            <span class="material-symbols-outlined text-sm">logout</span> Sair
+        </button>
+    </div>
+</aside>
+
+    <main class="flex-grow flex flex-col items-center justify-center p-12">
+        <div class="w-full max-w-5xl">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h1 class="text-3xl font-black text-[#004253] tracking-tight uppercase">Lançamento Profissional</h1>
+                    <p class="text-slate-500 font-medium">Selecione um paciente para registrar novos dados de saúde.</p>
+                </div>
+                <button onclick="abrirModalBusca()" class="bg-[#004253] text-white px-10 py-5 rounded font-black flex items-center gap-3 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">
+                    <span class="material-symbols-outlined">person_search</span> LOCALIZAR ALUNO
+                </button>
+            </div>
+
+            <div class="bg-white rounded shadow-2xl border border-slate-200 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</th>
+                            <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF</th>
+                            <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nascimento</th>
+                            <th class="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-corpo" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL BUSCA -->
+    <div id="modal-busca" class="modal-overlay">
+        <div class="bg-white w-[85%] max-w-6xl h-[80vh] rounded shadow-2xl flex flex-col overflow-hidden">
+            <header class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-black text-[#004253] uppercase tracking-tight">Buscar Aluno ou Servidor</h3>
+                <button onclick="fecharModalBusca()"><span class="material-symbols-outlined text-slate-400">close</span></button>
+            </header>
+            <div class="p-10 grid grid-cols-1 md:grid-cols-3 gap-8 bg-white shrink-0">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome</label>
+                    <input type="text" id="busca-nome" oninput="filtrarPacientes()" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/20" placeholder="Digite o nome...">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">CPF</label>
+                    <input type="text" id="busca-cpf" oninput="filtrarPacientes()" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/20" placeholder="000.000.000-00">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Matrícula</label>
+                    <input type="text" id="busca-mat" oninput="filtrarPacientes()" class="w-full mt-1 p-4 bg-slate-50 border-none rounded focus:ring-2 focus:ring-[#004253]/20" placeholder="Ex: 202410...">
+                </div>
+            </div>
+            <div id="resultados-busca" class="flex-grow overflow-y-auto p-10 divide-y divide-slate-100 bg-white"></div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAÇÃO -->
+    <div id="modal-confirmacao" class="modal-overlay">
+        <div class="bg-white w-full max-w-md rounded shadow-2xl p-10 text-center">
+            <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-[#004253]">
+                <span class="material-symbols-outlined text-5xl">person</span>
+            </div>
+            <h3 id="conf-nome" class="text-2xl font-black text-[#004253]">--</h3>
+            <p id="conf-detalhe" class="text-xs text-slate-400 uppercase font-bold tracking-[0.2em] mt-2 mb-10">--</p>
+            <div class="flex gap-4">
+                <button onclick="fecharConfirmacao()" class="flex-1 py-4 font-bold text-slate-400">Não é este</button>
+                <button onclick="abrirFormulario()" class="flex-1 bg-[#004253] text-white py-4 rounded font-bold shadow-xl">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORMULÁRIO -->
+    <div id="modal-formulario" class="modal-overlay">
+        <div class="w-full max-w-[1200px] bg-white shadow-2xl rounded overflow-hidden flex flex-col h-[90vh] relative">
+            
+            <div id="loading-overlay" class="absolute inset-0 bg-white/95 z-[110] flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+                <div class="flex flex-col items-center gap-6">
+                    <div class="flex gap-3"><div class="dot w-5 h-5 bg-[#004253] rounded-full"></div><div class="dot w-5 h-5 bg-[#004253] rounded-full"></div><div class="dot w-5 h-5 bg-[#004253] rounded-full"></div></div>
+                    <p class="text-[#004253] font-bold text-sm tracking-widest uppercase animate-pulse">Gravando no Banco de Dados...</p>
+                </div>
+            </div>
+
+            <header class="px-12 py-10 border-b border-gray-100 flex items-center justify-between shrink-0">
+                <div>
+                    <h1 class="text-2xl font-bold text-[#004253]">Avaliação Vittalis</h1>
+                    <p id="nome-paciente-atendimento" class="text-sm text-gray-500 font-medium">Paciente: --</p>
+                </div>
+                <nav class="flex items-center gap-4">
+                    <div class="flex items-center gap-3"><span id="progress-circle-1" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500">1</span><span id="progress-text-1" class="text-sm transition-all duration-300">QUADA</span></div>
+                    <div class="w-12 h-px bg-gray-200"></div>
+                    <div class="flex items-center gap-3"><span id="progress-circle-2" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500">2</span><span id="progress-text-2" class="text-sm transition-all duration-300">Anamnese</span></div>
+                    <div class="w-12 h-px bg-gray-200"></div>
+                    <div class="flex items-center gap-3"><span id="progress-circle-3" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500">3</span><span id="progress-text-3" class="text-sm transition-all duration-300">Hábitos</span></div>
+                    <div class="w-12 h-px bg-gray-200"></div>
+                    <div class="flex items-center gap-3"><span id="progress-circle-4" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500">4</span><span id="progress-text-4" class="text-sm transition-all duration-300">Medições</span></div>
+                </nav>
+            </header>
+
+            <div class="px-12 py-10 flex-1 overflow-y-auto relative">
+                
+                <!-- ETAPA 1: QUADA -->
+                <div id="step-1" class="step-panel active">
+                    <div class="grid grid-cols-12 gap-16">
+                        <div class="col-span-4 space-y-6">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">restaurant</span>
+                                <h2 class="text-xl font-bold">Escolhas Alimentares</h2>
+                            </div>
+                            <p class="text-[11px] text-gray-500 leading-relaxed uppercase font-bold tracking-tight">Qual sua motivação principal?</p>
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input name="quada_motivacao" value="Estético/Atleta" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="radio" required/>
+                                    <span class="text-sm font-semibold text-gray-700">Corpo Atleta (Visual)</span>
+                                </label>
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input name="quada_motivacao" value="Saúde" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="radio"/>
+                                    <span class="text-sm font-semibold text-gray-700">Motivos de Saúde</span>
+                                </label>
+                            </div>
+
+                            <div class="pt-6 space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Energéticos</label>
+                                <div class="flex bg-gray-50 p-1 rounded w-fit">
+                                    <button type="button" onclick="setToggle('energetico', false, 'quada')" id="btn_quada_energetico_nao" class="px-6 py-2 text-xs font-bold rounded bg-white shadow-sm text-gray-700 border border-gray-100">Não</button>
+                                    <button type="button" onclick="setToggle('energetico', true, 'quada')" id="btn_quada_energetico_sim" class="px-6 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-transparent shadow-none border-none">Sim</button>
+                                </div>
+                                <div id="campo_quada_energetico" class="hidden">
+                                    <input id="quada_energetico_detalhe" type="text" class="w-full p-4 bg-gray-50 border-none rounded text-sm" placeholder="Indique a quantidade e frequência..."/>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Caneta de Emagrecimento</label>
+                                <p class="text-[9px] text-gray-400 -mt-2 uppercase font-bold">Usa ou já usou alguma?</p>
+                                <div class="flex bg-gray-50 p-1 rounded w-fit">
+                                    <button type="button" onclick="setToggle('caneta', false, 'quada')" id="btn_quada_caneta_nao" class="px-6 py-2 text-xs font-bold rounded bg-white shadow-sm text-gray-700 border border-gray-100">Não</button>
+                                    <button type="button" onclick="setToggle('caneta', true, 'quada')" id="btn_quada_caneta_sim" class="px-6 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-transparent shadow-none border-none">Sim</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-8 space-y-8">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">history_toggle_off</span>
+                                <h2 class="text-xl font-bold">Recordatório 24 Horas</h2>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-6 pt-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Jejum e Desjejum</label>
+                                    <textarea id="quada_desjejum" class="w-full h-24 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="O que comeu desde a hora que acordou..." required></textarea>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Refeições e Tempo</label>
+                                    <textarea id="quada_refeicoes" class="w-full h-24 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Principais refeições e espaços de tempo que se alimentou..." required></textarea>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Intervalos e Lanches</label>
+                                    <textarea id="quada_intervalos" class="w-full h-24 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Lanches e pequenos intervalos..." required></textarea>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Ciclo Completo</label>
+                                    <textarea id="quada_rotina" class="w-full h-24 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Da hora que acordou até a hora que dormiu..." required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 2: ANAMNESE -->
+                <div id="step-2" class="step-panel">
+                    <div class="grid grid-cols-12 gap-16">
+                        <div class="col-span-4 space-y-6">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">hub</span>
+                                <h2 class="text-xl font-bold">Histórico Familiar</h2>
+                            </div>
+                            <p class="text-xs text-gray-500 leading-relaxed">Condições documentadas na família biológica imediata.</p>
+                            <div class="space-y-2 pt-4">
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input id="hist_diabetes" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="checkbox"/>
+                                    <span class="text-sm font-semibold text-gray-700">Diabetes</span>
+                                </label>
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input id="hist_hipertensao" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="checkbox"/>
+                                    <span class="text-sm font-semibold text-gray-700">Hipertensão</span>
+                                </label>
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input id="hist_infarto" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="checkbox"/>
+                                    <span class="text-sm font-semibold text-gray-700">Infarto Agudo do Miocárdio</span>
+                                </label>
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input id="hist_avc" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="checkbox"/>
+                                    <span class="text-sm font-semibold text-gray-700">Acidente Vascular Cerebral</span>
+                                </label>
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input id="hist_obesidade" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="checkbox"/>
+                                    <span class="text-sm font-semibold text-gray-700">Obesidade</span>
+                                </label>
+                                <label class="flex items-center gap-4 p-4 rounded bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border border-transparent">
+                                    <input id="hist_cancer" class="w-5 h-5 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="checkbox"/>
+                                    <span class="text-sm font-semibold text-gray-700">Câncer</span>
+                                </label>
+                                <div class="pt-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Outros</label>
+                                    <input id="hist_outros" type="text" class="w-full mt-1 p-3 bg-gray-50 border-none rounded text-sm" placeholder="Especifique outros..."/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-8 space-y-8">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">medical_services</span>
+                                <h2 class="text-xl font-bold">Perfil Clínico do Estudante</h2>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-10 pt-4">
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Doenças Atuais/Prévias</label>
+                                    <textarea id="clin_doencas" class="w-full h-32 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="As que você lembra que teve desde a infância..." required></textarea>
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Medicamentos</label>
+                                    <textarea id="clin_medicamentos" class="w-full h-32 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Em uso no momento (apenas nome) e se tem prescrição..." required></textarea>
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Lesões Anteriores</label>
+                                    <textarea id="clin_lesoes" class="w-full h-32 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Especifique lesões ocorridas na vida..." required></textarea>
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Histórico Cirúrgico</label>
+                                    <textarea id="clin_cirurgias" class="w-full h-32 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Todos os procedimentos anteriores..." required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 3: HÁBITOS -->
+                <div id="step-3" class="step-panel">
+                    <div class="grid grid-cols-12 gap-16">
+                        <div class="col-span-5 space-y-6">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">bedtime</span>
+                                <h2 class="text-xl font-bold">Qualidade do Sono</h2>
+                            </div>
+                            <p class="text-xs text-gray-500 leading-relaxed uppercase font-bold tracking-tight">Avaliação (1 a 5):</p>
+                            <div class="flex justify-between items-center pt-2" id="sleep-buttons">
+                                <button onclick="setSleepQuality(1, this)" class="sleep-btn w-12 h-12 rounded border-2 border-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 hover:border-[#004253] hover:text-[#004253] transition-all">1</button>
+                                <button onclick="setSleepQuality(2, this)" class="sleep-btn w-12 h-12 rounded border-2 border-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 hover:border-[#004253] hover:text-[#004253] transition-all">2</button>
+                                <button onclick="setSleepQuality(3, this)" class="sleep-btn w-12 h-12 rounded border-2 border-[#004253] bg-[#004253]/5 flex items-center justify-center text-sm font-bold text-[#004253] transition-all active-sleep">3</button>
+                                <button onclick="setSleepQuality(4, this)" class="sleep-btn w-12 h-12 rounded border-2 border-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 hover:border-[#004253] hover:text-[#004253] transition-all">4</button>
+                                <button onclick="setSleepQuality(5, this)" class="sleep-btn w-12 h-12 rounded border-2 border-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 hover:border-[#004253] hover:text-[#004253] transition-all">5</button>
+                            </div>
+
+                            <div class="pt-6 space-y-4">
+                                <div class="flex items-center gap-3 text-[#004253]">
+                                    <span class="material-symbols-outlined text-2xl">fitness_center</span>
+                                    <h2 class="text-xl font-bold">Atividade Física</h2>
+                                </div>
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Sessões por Semana</label>
+                                    <input id="hab_exercicios" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm font-bold text-[#004253]" placeholder="0" type="number" min="0" required/>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Especificar Prática</label>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <label class="flex items-center gap-3 p-3 rounded bg-gray-50/50 hover:bg-gray-100 cursor-pointer transition-colors border border-transparent">
+                                            <input id="atv_natacao" type="checkbox" class="w-4 h-4 text-[#004253] border-gray-300 rounded-none focus:ring-[#004253]"/>
+                                            <span class="text-sm font-medium text-gray-700">Natação</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-3 rounded bg-gray-50/50 hover:bg-gray-100 cursor-pointer transition-colors border border-transparent">
+                                            <input id="atv_academia" type="checkbox" class="w-4 h-4 text-[#004253] border-gray-300 rounded-none focus:ring-[#004253]"/>
+                                            <span class="text-sm font-medium text-gray-700">Academia / Musculação</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-3 rounded bg-gray-50/50 hover:bg-gray-100 cursor-pointer transition-colors border border-transparent">
+                                            <input id="atv_luta" type="checkbox" class="w-4 h-4 text-[#004253] border-gray-300 rounded-none focus:ring-[#004253]"/>
+                                            <span class="text-sm font-medium text-gray-700">Lutas / Artes Marciais</span>
+                                        </label>
+                                        <div class="pt-2">
+                                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Outros</label>
+                                            <input id="atv_outros" type="text" class="w-full mt-1 p-3 bg-gray-50 border-none rounded text-sm" placeholder="Qual outra atividade?" required/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-7 space-y-8">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">monitor_heart</span>
+                                <h2 class="text-xl font-bold">Hábitos e Estilo de Vida</h2>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-10 gap-y-10 pt-4">
+                                <div class="space-y-8">
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Uso de Tabaco</label>
+                                        <div class="flex bg-gray-50 p-1 rounded w-fit">
+                                            <button id="btn_hab_tabaco_nao" onclick="setToggle('tabaco', false, 'hab')" class="px-6 py-2 text-xs font-bold rounded bg-white shadow-sm text-gray-700 border border-gray-100">Não</button>
+                                            <button id="btn_hab_tabaco_sim" onclick="setToggle('tabaco', true, 'hab')" class="px-6 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-transparent shadow-none border-none">Sim</button>
+                                        </div>
+                                        <div id="campo_hab_tabaco" class="hidden">
+                                            <input id="hab_tabaco_detalhe" type="text" class="w-full p-3 bg-gray-50 border-none rounded text-xs" placeholder="Quantidade e frequência semanal..."/>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Uso de Álcool</label>
+                                        <div class="flex bg-gray-50 p-1 rounded w-fit">
+                                            <button id="btn_hab_alcool_nao" onclick="setToggle('alcool', false, 'hab')" class="px-6 py-2 text-xs font-bold rounded bg-white shadow-sm text-gray-700 border border-gray-100">Não</button>
+                                            <button id="btn_hab_alcool_sim" onclick="setToggle('alcool', true, 'hab')" class="px-6 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-transparent shadow-none border-none">Sim</button>
+                                        </div>
+                                        <div id="campo_hab_alcool" class="hidden">
+                                            <input id="hab_alcool_detalhe" type="text" class="w-full p-3 bg-gray-50 border-none rounded text-xs" placeholder="Quantidade e frequência semanal..."/>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Tempo de Tela (Diário)</label>
+                                        <div class="space-y-2">
+                                            <label class="flex items-center gap-3 p-3 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer border border-transparent">
+                                                <input name="hab_tela" value="Pouco" class="w-4 h-4 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="radio" required/>
+                                                <span class="text-xs font-semibold text-gray-700">Pouco (0 a 3 horas)</span>
+                                            </label>
+                                            <label class="flex items-center gap-3 p-3 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer border border-transparent">
+                                                <input name="hab_tela" value="Muito" class="w-4 h-4 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="radio"/>
+                                                <span class="text-xs font-semibold text-gray-700">Muito (3 a 7 horas)</span>
+                                            </label>
+                                            <label class="flex items-center gap-3 p-3 rounded bg-gray-50 hover:bg-gray-100 cursor-pointer border border-transparent">
+                                                <input name="hab_tela" value="Extremo" class="w-4 h-4 rounded-none border-gray-300 text-[#004253] focus:ring-[#004253]" type="radio"/>
+                                                <span class="text-xs font-semibold text-gray-700">Extremo (Mais de 7 horas)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-8">
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Dietas Específicas</label>
+                                        <textarea id="hab_dietas" class="w-full h-24 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Informe se foi por prescrição médica..." required></textarea>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Complexo Alérgico (Alergias)</label>
+                                        <textarea id="hab_alergias" class="w-full h-24 p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm placeholder:text-gray-400" placeholder="Liste todas as alergias e intolerâncias conhecidas..." required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETAPA 4: MEDIÇÕES -->
+                <div id="step-4" class="step-panel">
+                    <div class="max-w-4xl mx-auto space-y-12 pb-8">
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">monitor_heart</span>
+                                <h2 class="text-xl font-bold">Sinais Vitais</h2>
+                            </div>
+                            <div class="grid grid-cols-3 gap-6">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Pressão Sistólica (mmHg)</label>
+                                    <input id="med_psistolica" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm" placeholder="120" type="number" required/>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Pressão Diastólica (mmHg)</label>
+                                    <input id="med_pdiastolica" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm" placeholder="80" type="number" required/>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Frequência Cardíaca (BPM)</label>
+                                    <input id="med_fc" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm" placeholder="72" type="number" required/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">straighten</span>
+                                <h2 class="text-xl font-bold">Métricas Corporais</h2>
+                            </div>
+                            <div class="flex gap-6 items-end">
+                                <div class="flex-1 grid grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Peso (kg)</label>
+                                        <input id="med_peso" inputmode="decimal" class="w-full p-5 bg-gray-50 border-none rounded-lg focus:ring-1 focus:ring-gray-300 text-lg font-semibold text-[#004253]" placeholder="0.0" type="text" required/>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Altura (m)</label>
+                                        <input id="med_altura" inputmode="decimal" class="w-full p-5 bg-gray-50 border-none rounded-lg focus:ring-1 focus:ring-gray-300 text-lg font-semibold text-[#004253]" placeholder="0.00" type="text" required/>
+                                    </div>
+                                </div>
+                                <div class="flex-none w-64 h-[84px] bg-[#004253] rounded-lg flex flex-col items-center justify-center text-white shadow-lg">
+                                    <span class="text-[9px] font-black uppercase tracking-[0.2em] opacity-80">IMC CALCULADO</span>
+                                    <span id="display_imc" class="text-3xl font-black">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEÇÃO COMPOSIÇÃO ALTERADA PARA GLICEMIA E RCQ -->
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-3 text-[#004253]">
+                                <span class="material-symbols-outlined text-2xl">opacity</span>
+                                <h2 class="text-xl font-bold">Bioquímica e Circunferências</h2>
+                            </div>
+                            <div class="grid grid-cols-3 gap-6">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Glicemia Capilar (mg/dL)</label>
+                                    <input id="med_glicemia" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm" placeholder="90" type="number" required/>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Circunferência Abdominal (cm)</label>
+                                    <input id="med_cintura" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm" placeholder="85" type="number" required/>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">RCQ</label>
+                                    <input id="med_rcq" class="w-full p-4 bg-gray-50 border-none rounded focus:ring-1 focus:ring-gray-300 text-sm" placeholder="0.85" type="text" required/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <footer class="px-12 py-8 border-t border-gray-100 flex items-center justify-between bg-white shrink-0">
+                <button onclick="fecharFormulario()" class="flex items-center gap-2 px-6 py-3 border border-gray-300 text-sm font-bold text-gray-600 rounded">
+                    <span class="material-symbols-outlined text-lg">arrow_back</span> Cancelar Atendimento
+                </button>
+                <div class="flex items-center gap-8">
+                    <div class="text-right"><p class="text-[10px] uppercase font-bold text-gray-400">Progresso</p><p id="footer-info-time" class="text-xs font-bold text-[#004253]">Etapa 1 de 4</p></div>
+                    <button id="btn-next" onclick="changeStep(1)" class="px-10 py-4 bg-[#004253] text-white rounded font-bold text-sm shadow-xl hover:bg-[#003643]">
+                        <span id="btn-next-text">Prosseguir para Anamnese</span>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#004253] text-white px-8 py-4 rounded-xl shadow-2xl z-[150] animate-bounce">
+        <span id="toast-msg" class="font-bold">Avaliação Gravada!</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaIBvT8hMNeMSAVBwOBIugP1PWN2lcQUo",
+            authDomain: "site-tcc-abaa1.firebaseapp.com",
+            projectId: "site-tcc-abaa1",
+            storageBucket: "site-tcc-abaa1.firebasestorage.app",
+            messagingSenderId: "819270190928",
+            appId: "1:819270190928:web:523152052cdfb4247e4e55",
+            measurementId: "G-YLJ4TP0BFC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let allUsers = [];
+        let selectedUser = null;
+        let currentStep = 1;
+
+        const dadosAvaliacao = {
+            quada: { motivacao: "", desjejum: "", refeicoes: "", intervalos: "", rotina: "", tomaEnergetico: false, energeticoDetalhe: "", canetaEmagrecimento: false },
+            historicoFamiliar: { diabetes: false, hipertensao: false, infarto: false, avc: false, obesidade: false, cancer: false, outros: "" },
+            perfilClinico: { doencasAtuais: "", medicamentos: "", lesoesAnteriores: "", cirurgias: "" },
+            habitosVida: { qualidadeSono: 3, usaTabaco: false, tabacoDetalhe: "", usaAlcool: false, alcoolDetalhe: "", tempoTela: "", sessoesExercicios: 0, tiposAtividade: { natacao: false, academia: false, luta: false }, outrosAtividade: "", dietasEspecificas: "", alergias: "" },
+            medicoes: { pressaoSistolica: null, pressaoDiastolica: null, freqCardiaca: null, peso: null, altura: null, imc: null, glicemia: null, circAbdominal: null, rcq: null }
+        };
+
+        onAuthStateChanged(auth, (u) => { if(!u) window.location.href='index.html'; else carregarPacientes(); });
+
+        async function carregarPacientes() {
+            const snap = await getDocs(collection(db, "users"));
+            allUsers = [];
+            snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+            renderTabela(allUsers);
+        }
+
+        function renderTabela(lista) {
+            const corpo = document.getElementById('lista-corpo');
+            corpo.innerHTML = '';
+            lista.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 cursor-pointer transition-all group";
+                tr.onclick = () => abrirConfirmacao(u);
+                tr.innerHTML = `
+                    <td class="px-8 py-5 font-bold text-[#004253]">${u.nome}</td>
+                    <td class="px-8 py-5 text-slate-500 text-sm font-medium">${u.cpf || '--'}</td>
+                    <td class="px-8 py-5 text-slate-500 text-sm font-medium">${u.dataNascimento || '--'}</td>
+                    <td class="px-8 py-5 text-right"><span class="material-symbols-outlined text-slate-300 group-hover:text-[#004253]">chevron_right</span></td>
+                `;
+                corpo.appendChild(tr);
+            });
+        }
+
+        window.filtrarPacientes = () => {
+            const n = document.getElementById('busca-nome').value.toLowerCase();
+            const c = document.getElementById('busca-cpf').value;
+            const m = document.getElementById('busca-mat').value;
+            const filtrados = allUsers.filter(u => (!n || u.nome.toLowerCase().includes(n)) && (!c || u.cpf?.includes(c)) && (!m || u.matricula?.includes(m)));
+            
+            const area = document.getElementById('resultados-busca');
+            area.innerHTML = '';
+            filtrados.forEach(u => {
+                const div = document.createElement('div');
+                div.className = "p-4 hover:bg-slate-50 cursor-pointer flex justify-between items-center";
+                div.onclick = () => { fecharModalBusca(); abrirConfirmacao(u); };
+                div.innerHTML = `<span class="font-bold text-[#004253]">${u.nome}</span> <span class="text-xs text-slate-400 font-black tracking-widest">CPF: ${u.cpf || '--'}</span>`;
+                area.appendChild(div);
+            });
+        };
+
+        window.abrirModalBusca = () => document.getElementById('modal-busca').classList.add('active');
+        window.fecharModalBusca = () => document.getElementById('modal-busca').classList.remove('active');
+        window.abrirConfirmacao = (u) => { selectedUser = u; document.getElementById('conf-nome').innerText = u.nome; document.getElementById('conf-detalhe').innerText = `${u.tipo || 'Aluno'} | CPF: ${u.cpf || '--'}`; document.getElementById('modal-confirmacao').classList.add('active'); };
+        window.fecharConfirmacao = () => document.getElementById('modal-confirmacao').classList.remove('active');
+        
+        window.abrirFormulario = () => { 
+            fecharConfirmacao(); 
+            document.getElementById('nome-paciente-atendimento').innerText = `Paciente: ${selectedUser.nome}`;
+            document.getElementById('modal-formulario').classList.add('active'); 
+            currentStep = 1; updateUI(); 
+        };
+        window.fecharFormulario = () => { if(confirm("Cancelar lançamento? Dados não salvos serão perdidos.")) location.reload(); };
+
+        window.applyMask = (input, decimals) => {
+            input.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '');
+                if (!v) { e.target.value = ""; calcularIMC(); return; }
+                e.target.value = (parseInt(v) / Math.pow(10, decimals)).toFixed(decimals);
+                calcularIMC();
+            });
+        };
+
+        window.calcularIMC = () => {
+            const p = parseFloat(document.getElementById('med_peso').value);
+            const a = parseFloat(document.getElementById('med_altura').value);
+            const d = document.getElementById('display_imc');
+            if(p > 0 && a > 0) d.innerText = (p/(a*a)).toFixed(1); else d.innerText = "--";
+        };
+
+        window.setSleepQuality = (v, el) => {
+            dadosAvaliacao.habitosVida.qualidadeSono = v;
+            document.querySelectorAll('.sleep-btn').forEach(b => b.className = "sleep-btn w-12 h-12 rounded border-2 border-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 hover:border-[#004253] hover:text-[#004253] transition-all");
+            el.className = "sleep-btn w-12 h-12 rounded border-2 border-[#004253] bg-[#004253]/5 flex items-center justify-center text-sm font-bold text-[#004253] transition-all active-sleep";
+        };
+
+        window.setToggle = (tipo, val, prefixo) => {
+            const btnNao = document.getElementById(`btn_${prefixo}_${tipo}_nao`);
+            const btnSim = document.getElementById(`btn_${prefixo}_${tipo}_sim`);
+            const campo = document.getElementById(`campo_${prefixo}_${tipo}`);
+            
+            if(prefixo === 'quada') { 
+                if(tipo === 'energetico') dadosAvaliacao.quada.tomaEnergetico = val; 
+                if(tipo === 'caneta') dadosAvaliacao.quada.canetaEmagrecimento = val; 
+            } else { 
+                if(tipo === 'tabaco') dadosAvaliacao.habitosVida.usaTabaco = val; 
+                if(tipo === 'alcool') dadosAvaliacao.habitosVida.usaAlcool = val;
+            }
+            
+            if(val) { 
+                btnSim.className = "px-6 py-2 text-xs font-bold rounded bg-white shadow-sm text-gray-700 border border-gray-100"; 
+                btnNao.className = "px-6 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-transparent shadow-none border-none"; 
+                campo?.classList.remove('hidden'); 
+            } else { 
+                btnNao.className = "px-6 py-2 text-xs font-bold rounded bg-white shadow-sm text-gray-700 border border-gray-100"; 
+                btnSim.className = "px-6 py-2 text-xs font-bold text-gray-400 hover:text-gray-600 bg-transparent shadow-none border-none"; 
+                campo?.classList.add('hidden'); 
+            }
+        };
+
+        function updateUI() {
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            document.getElementById('footer-info-time').innerText = `Etapa ${currentStep} de 4`;
+            const labels = ["Prosseguir para Anamnese", "Prosseguir para Hábitos", "Próximo (Medições)", "Finalizar e Salvar"];
+            document.getElementById('btn-next-text').innerText = labels[currentStep-1];
+            for (let i = 1; i <= 4; i++) {
+                const c = document.getElementById(`progress-circle-${i}`);
+                if (i < currentStep) { c.className = "w-8 h-8 rounded-full bg-[#E5ECEE] text-[#004253] flex items-center justify-center text-xs font-bold"; c.innerHTML = `<span class="material-symbols-outlined text-sm font-bold">check</span>`; }
+                else if (i === currentStep) { c.className = "w-8 h-8 rounded-full bg-[#004253] text-white flex items-center justify-center text-xs font-bold scale-110 shadow-md"; c.innerHTML = i; }
+                else { c.className = "w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-xs font-bold"; c.innerHTML = i; }
+            }
+        }
+
+        window.changeStep = (dir) => {
+            if (dir > 0 && currentStep === 4) { salvarAtendimento(); return; }
+            currentStep += dir;
+            updateUI();
+        };
+
+        // FUNÇÃO PARA TRATAR NÚMEROS VAZIOS (CORREÇÃO PARA SPANS E INPUTS)
+        const getValNum = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            // Se for span (como display_imc), pega innerText. Se for input, pega value.
+            const raw = (el.value !== undefined ? el.value : el.innerText).trim().replace(',', '.');
+            return (raw === "" || raw === "--") ? null : parseFloat(raw);
+        };
+
+        async function salvarAtendimento() {
+            // VERIFICAÇÃO DE CAMPOS OBRIGATÓRIOS
+            if(!document.getElementById('quada_desjejum').value.trim() || !document.getElementById('med_peso').value.trim()) {
+                alert("Por favor, preencha os dados básicos antes de salvar!");
+                return;
+            }
+
+            const loader = document.getElementById('loading-overlay');
+            loader.classList.replace('opacity-0', 'opacity-100');
+            loader.classList.remove('pointer-events-none');
+            
+            try {
+                const payload = {
+                    userId: selectedUser.id,
+                    userEmail: selectedUser.email || 'atendimento_profissional@vittalis.com',
+                    timestamp: serverTimestamp(),
+                    quada: {
+                        motivacao: document.querySelector('input[name="quada_motivacao"]:checked')?.value || "",
+                        desjejum: document.getElementById('quada_desjejum').value,
+                        refeicoes: document.getElementById('quada_refeicoes').value,
+                        intervalos: document.getElementById('quada_intervalos').value,
+                        rotina: document.getElementById('quada_rotina').value,
+                        tomaEnergetico: dadosAvaliacao.quada.tomaEnergetico,
+                        energeticoDetalhe: document.getElementById('quada_energetico_detalhe').value,
+                        canetaEmagrecimento: dadosAvaliacao.quada.canetaEmagrecimento
+                    },
+                    historicoFamiliar: {
+                        diabetes: document.getElementById('hist_diabetes').checked,
+                        hipertensao: document.getElementById('hist_hipertensao').checked,
+                        infarto: document.getElementById('hist_infarto').checked,
+                        avc: document.getElementById('hist_avc').checked,
+                        obesidade: document.getElementById('hist_obesidade').checked,
+                        cancer: document.getElementById('hist_cancer').checked,
+                        outros: document.getElementById('hist_outros').value
+                    },
+                    perfilClinico: {
+                        doencasAtuais: document.getElementById('clin_doencas').value,
+                        medicamentos: document.getElementById('clin_medicamentos').value,
+                        lesoesAnteriores: document.getElementById('clin_lesoes').value,
+                        cirurgias: document.getElementById('clin_cirurgias').value
+                    },
+                    habitosVida: {
+                        qualidadeSono: dadosAvaliacao.habitosVida.qualidadeSono,
+                        sessoesExercicios: parseInt(document.getElementById('hab_exercicios').value) || 0,
+                        tiposAtividade: {
+                            natacao: document.getElementById('atv_natacao').checked,
+                            academia: document.getElementById('atv_academia').checked,
+                            luta: document.getElementById('atv_luta').checked
+                        },
+                        outrosAtividade: document.getElementById('atv_outros').value,
+                        usaTabaco: dadosAvaliacao.habitosVida.usaTabaco,
+                        tabacoDetalhe: document.getElementById('hab_tabaco_detalhe').value,
+                        usaAlcool: dadosAvaliacao.habitosVida.usaAlcool, 
+                        alcoolDetalhe: document.getElementById('hab_alcool_detalhe').value,
+                        tempoTela: document.querySelector('input[name="hab_tela"]:checked')?.value || "",
+                        dietasEspecificas: document.getElementById('hab_dietas').value,
+                        alergias: document.getElementById('hab_alergias').value
+                    },
+                    medicoes: {
+                        pressaoSistolica: getValNum('med_psistolica'),
+                        pressaoDiastolica: getValNum('med_pdiastolica'),
+                        freqCardiaca: getValNum('med_fc'),
+                        peso: getValNum('med_peso'),
+                        altura: getValNum('med_altura'),
+                        imc: getValNum('display_imc'),
+                        glicemia: getValNum('med_glicemia'),
+                        circAbdominal: getValNum('med_cintura'),
+                        rcq: document.getElementById('med_rcq').value || null
+                    }
+                };
+
+                await addDoc(collection(db, "assessments"), payload);
+                const t = document.getElementById('toast'); t.classList.remove('hidden');
+                setTimeout(() => location.reload(), 2000);
+
+            } catch (e) { 
+                console.error("Erro ao salvar:", e);
+                loader.classList.replace('opacity-100', 'opacity-0');
+                loader.classList.add('pointer-events-none');
+                alert("Erro ao salvar no banco de dados! Verifique se preencheu corretamente."); 
+            }
+        }
+
+        window.logoutAdmin = () => signOut(auth).then(() => window.location.href = 'index.html');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyMask(document.getElementById('med_peso'), 1);
+            applyMask(document.getElementById('med_altura'), 2);
+        });
+    </script>
+</body>
+</html>
